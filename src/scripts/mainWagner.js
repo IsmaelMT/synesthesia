@@ -6,12 +6,16 @@ import BoxBlurPass from '@superguigui/wagner/src/passes/box-blur/BoxBlurPass'
 import FXAAPass from '@superguigui/wagner/src/passes/fxaa/FXAAPass'
 import ZoomBlurPassfrom from '@superguigui/wagner/src/passes/zoom-blur/ZoomBlurPass'
 import MultiPassBloomPass from '@superguigui/wagner/src/passes/bloom/MultiPassBloomPass'
+import AudioHandler from 'sound/AudioHandler'
 
 class Main extends AbstractApplication {
 
     constructor() {
 
         super();
+        this.audioHandler = new AudioHandler;
+        this.defaultVolume = 0;
+
         this.cubes = [];
 
         this.params = {
@@ -78,11 +82,23 @@ class Main extends AbstractApplication {
 
     animate() {
         super.animate();
+        
+        console.log(this.audioHandler.pitchDetection());
+
+        let size;
+        let new_volume = 0;
+        let peakDetect = false;
+        
+        // new_volume = this.audioHandler.smoothedVolume(new_volume);
+        // peakDetect = this.audioHandler.peakDetected();
+        size = new_volume * 100;
 
         for (let i = 0; i < this.cubes.length; i++) {
             this.cubes[i].rotation.y += 0.01 + ((i - this.cubes.length) * 0.00001);
             this.cubes[i].rotation.x += 0.01 + ((i - this.cubes.length) * 0.00001);
+            // this.cubes[i].scale.set(size, size, size);
         }
+
 
         if (this.params.usePostProcessing) {
             this.composer.reset();
@@ -95,10 +111,6 @@ class Main extends AbstractApplication {
         else {
             this._renderer.render(this._scene, this._camera);
         }
-
-
-
     }
-
 }
 export default Main;

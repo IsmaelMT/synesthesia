@@ -70,8 +70,8 @@ let config = {
                 exclude: /node_modules/,
                 loader: 'url-loader?limit=100000'
             }
-        ]
-    }
+        ],
+    },
 };
 
 module.exports = function configuration(options) {

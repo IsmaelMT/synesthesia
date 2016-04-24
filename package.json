@@ -40,6 +40,7 @@
     "glslify-fancy-imports": "^1.0.1",
     "glslify-hex": "^2.0.1",
     "lodash": "^3.10.1",
+    "p5": "",
     "raw-loader": "^0.5.1",
     "three": "^0.75.0",
     "transform-loader": "^0.2.3"
