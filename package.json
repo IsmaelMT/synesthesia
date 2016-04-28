@@ -23,7 +23,6 @@
     "eslint-plugin-react": "^4.0.0",
     "file-loader": "^0.8.4",
     "html-webpack-plugin": "^1.7.0",
-    "ify-loader": "mattdesl/ify-loader#fix-errors",
     "minimist": "^1.2.0",
     "webpack": "^1.12.15",
     "webpack-dev-server": "^1.14.0"
