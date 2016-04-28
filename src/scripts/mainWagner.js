@@ -83,19 +83,31 @@ class Main extends AbstractApplication {
     animate() {
         super.animate();
         
-        console.log(this.audioHandler.pitchDetection());
+        //onsole.log(this.audioHandler.pitchDetection());
 
         let size;
         let new_volume = 0;
-        let peakDetect = false;
+        let beat;
+        // let peakDetect = false;
         
-        // new_volume = this.audioHandler.smoothedVolume(new_volume);
-        // peakDetect = this.audioHandler.peakDetected();
+        new_volume = this.audioHandler.smoothedVolume(new_volume);
+        beat = this.audioHandler.peakDetected();
+        
         size = new_volume * 100;
+        // beat = this.audioHandler.beatDetected(new_volume * 100);
+
+        // console.log(beat);
 
         for (let i = 0; i < this.cubes.length; i++) {
             this.cubes[i].rotation.y += 0.01 + ((i - this.cubes.length) * 0.00001);
             this.cubes[i].rotation.x += 0.01 + ((i - this.cubes.length) * 0.00001);
+            if (beat) {
+                this.cubes[i].scale.set(1.2, 1.2, 1.2);
+            }
+            else {
+                this.cubes[i].scale.set(1, 1, 1);
+            }
+            
             // this.cubes[i].scale.set(size, size, size);
         }
 
