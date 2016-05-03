@@ -21,18 +21,11 @@ let config = {
     resolve: {
         modulesDirectories: ['src','node_modules','local_modules'],
         extensions: ['', '.js'],
-        /*root: [
-            path.resolve('./src/'),
-        ],*/
+    	alias: {
+	    "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js")
+	}
     },
     module: {
-        /*preLoaders: [
-            {
-                test: /\.js$/,
-                exclude: [/node_modules/,/local_modules/],
-                loader: 'eslint-loader'
-            }
-        ],*/
         // allow local glslify/browserify config to work
         postLoaders: [
             {
@@ -69,7 +62,11 @@ let config = {
                 test: /\.(woff|woff2|eot|ttf|svg)$/,
                 exclude: /node_modules/,
                 loader: 'url-loader?limit=100000'
-            }
+            },
+	    {
+	        test:  path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
+	        loader: "exports?Kinect=window.Kinect&KinectUI=window.KinectUI"
+	    }
         ],
     },
 };

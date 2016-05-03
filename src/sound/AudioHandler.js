@@ -1,6 +1,7 @@
 import p5 from "p5"
 import "p5/lib/addons/p5.sound"
 import PitchDetect from "pitch-detect"
+import "kinect"
 
 let MTRACK_ID = "3be538a133136bbe24c9362d1e7533f41dca2835b79caf26e975ac5879e6bff5"
 
@@ -9,7 +10,6 @@ class AudioHandler {
 
 
     constructor() {
-       
         this.input = this.getInputSource();
         let micInit = new Promise((resolve, reject) => { this.input.start(resolve, reject) });
 
