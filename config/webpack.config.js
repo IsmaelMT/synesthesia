@@ -22,7 +22,8 @@ let config = {
         modulesDirectories: ['src','node_modules','local_modules'],
         extensions: ['', '.js'],
     	alias: {
-	    "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js")
+	    "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
+	    "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js")
 	}
     },
     module: {
@@ -66,7 +67,12 @@ let config = {
 	    {
 	        test:  path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
 	        loader: "exports?Kinect=window.Kinect&KinectUI=window.KinectUI"
+	    },
+    	    {
+	        test:  path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
+	        loader: "script"
 	    }
+
         ],
     },
 };

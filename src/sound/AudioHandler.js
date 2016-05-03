@@ -1,7 +1,6 @@
 import p5 from "p5"
 import "p5/lib/addons/p5.sound"
 import PitchDetect from "pitch-detect"
-import "kinect"
 
 let MTRACK_ID = "3be538a133136bbe24c9362d1e7533f41dca2835b79caf26e975ac5879e6bff5"
 
@@ -17,10 +16,10 @@ class AudioHandler {
             (result) => { this.pitchDetect = new PitchDetect(this.input.stream) },
             (err) => { console.log(err)}
         );
- 
-        this.backingTrack = p5.prototype.loadSound("/assets/digital.mp3", 
-            () => { this.backingTrack.play(); } 
-        );
+
+        //this.backingTrack = p5.prototype.loadSound("/assets/digital.mp3", 
+        //    () => { this.backingTrack.play(); } 
+        //);
         
         //this.backingTrack = this.setBackingTrackWebApi("/assets/digital.mp3");
         
