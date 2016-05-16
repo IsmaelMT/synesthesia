@@ -1,32 +1,53 @@
-import path from 'path';
-import webpack from 'webpack';
+import Webpack from "webpack"
+import path from "path"
 
-import _ from 'lodash';
-
-import Clean from 'clean-webpack-plugin';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import CopyWebpackPlugin from 'copy-webpack-plugin';
-
-// Root app path
-let rootDir = path.resolve(__dirname, '..');
-let cleanDirectories = ['build', 'dist'];
-// Plugins configuration
-let plugins = [new webpack.NoErrorsPlugin()];
-
-// Default value for development env
-let outputPath = path.join(rootDir, 'build');
-let suffix = 'dev';
+let nodeModulesPath = path.resolve(__dirname, 'node_modules');
+let buildPath = path.resolve(__dirname, 'public', 'build');
+let mainPath = path.resolve(__dirname, '..', 'src', 'app.js');
 
 let config = {
+
+    // Makes sure errors in console map to the correct file
+    // and line number
+    devtool: 'eval',
+    
+    entry: [
+        // For hot style updates
+        'webpack/hot/dev-server',
+
+        // The script refreshing the browser on none hot updates
+        'webpack-dev-server/client?http://localhost:8080',
+
+        // Our application
+        mainPath
+    ],
+    output: {
+
+        // We need to give Webpack a path. It does not actually need it,
+        // because files are kept in memory in webpack-dev-server, but an
+        // error will occur if nothing is specified. We use the buildPath
+        // as that points to where the files will eventually be bundled
+        // in production
+        path: buildPath,
+        filename: 'bundle.js',
+
+        // Everything related to Webpack should go through a build path,
+        // localhost:3000/build. That makes proxying easier to handle
+        publicPath: '/build/'
+    },
+
     resolve: {
         modulesDirectories: ['src','node_modules','local_modules'],
         extensions: ['', '.js'],
-    	alias: {
-	    "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
-	    "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js")
-	}
+        alias: {
+            "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
+            "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js")
+        }
     },
+
+
     module: {
+
         // allow local glslify/browserify config to work
         postLoaders: [
             {
@@ -39,6 +60,7 @@ let config = {
                 test: /\.js$/,
                 loader: 'babel',
                 exclude: /node_modules/,
+                
                 query: {
                     cacheDirectory: true,
                     // presets: ['babel-preset-es2015']
@@ -64,77 +86,21 @@ let config = {
                 exclude: /node_modules/,
                 loader: 'url-loader?limit=100000'
             },
-	    {
-	        test:  path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
-	        loader: "exports?Kinect=window.Kinect&KinectUI=window.KinectUI"
-	    },
+	        {
+	            test:  path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
+	            loader: "exports?Kinect=window.Kinect&KinectUI=window.KinectUI"
+	        },
     	    {
-	        test:  path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
-	        loader: "script"
-	    }
+	            test:  path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
+	            loader: "script"
+	        }
 
         ],
-    },
+     },
+
+    // We have to manually add the Hot Replacement plugin when running
+    // from Node
+    plugins: [new Webpack.HotModuleReplacementPlugin()]
 };
 
-module.exports = function configuration(options) {
-    let prod = options.production;
-
-    let hash = prod ? '-[hash]' : '';
-
-    let entryAppPath = [path.resolve(__dirname, '../src/app.js')];
-
-    if (prod) {
-        suffix = 'prod';
-        outputPath = path.join(rootDir, 'dist');
-        plugins.push(
-            new webpack.optimize.UglifyJsPlugin({
-                warnings: false,
-                minimize: true,
-                sourceMap: false
-            })
-        );
-    }
-
-    // Plugin configuration
-    plugins.push(new Clean(cleanDirectories, rootDir));
-    plugins.push(
-        new HtmlWebpackPlugin({
-            filename: 'index.html',
-            template: 'src/html/index.' + suffix + '.html'
-        })
-    );
-
-    plugins.push(
-        new CopyWebpackPlugin([
-            {from: 'src/textures',to:'textures'},
-        ])
-    );
-
-    plugins.push(
-        new webpack.optimize.DedupePlugin()
-    );
-
-    plugins.push(
-        new webpack.optimize.OccurenceOrderPlugin(true)
-    );
-
-    if (!prod) {
-        entryAppPath.push('webpack/hot/dev-server');
-    }
-
-    return _.merge({}, config, {
-        entry: {
-            bundle: entryAppPath,
-        },
-        output: {
-            path: outputPath,
-            filename: '[name]' + hash + '.js'
-        },
-        /*context: __dirname,
-        node: {
-            __filename: true
-        },*/
-        plugins: plugins
-    });
-};
+module.exports = config;

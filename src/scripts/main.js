@@ -8,7 +8,7 @@ import ZoomBlurPassfrom from '@superguigui/wagner/src/passes/zoom-blur/ZoomBlurP
 import MultiPassBloomPass from '@superguigui/wagner/src/passes/bloom/MultiPassBloomPass'
 import AudioHandler from 'sound/AudioHandler'
 import KinectServer from 'gestures/KinectServer'
-
+import OSCHandler from 'sound/OSCHandler'
 
 class Main extends AbstractApplication {
 
