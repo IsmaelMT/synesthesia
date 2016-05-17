@@ -1,6 +1,7 @@
 import express from "express"
 import path from "path"
 import httpProxy from "http-proxy"
+import "./osc_server"
 
 var proxy = httpProxy.createProxyServer();
 var app = express();

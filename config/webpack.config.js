@@ -41,7 +41,8 @@ let config = {
         extensions: ['', '.js'],
         alias: {
             "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
-            "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js")
+            "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
+            "osc-browser": path.join(__dirname, "..", "libs", "osc", "osc-browser.js")
         }
     },
 
@@ -66,8 +67,10 @@ let config = {
                     // presets: ['babel-preset-es2015']
                 }
             },
-            //{ test: /\.(glsl|frag|vert)$/, loader: 'raw', exclude: /node_modules/ },
-            //{ test: /\.(glsl|frag|vert)$/, loader: 'glslify', exclude: /node_modules/ },
+            {
+                test: /\.json$/,
+                loader: 'json'
+            },
             {
                 test: /node_modules/,
                 loader: 'ify'
@@ -93,8 +96,11 @@ let config = {
     	    {
 	            test:  path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
 	            loader: "script"
+	        },
+            {
+	            test:  path.join(__dirname, "..", "libs", "osc", "osc-browser.js"),
+	            loader: "script"
 	        }
-
         ],
      },
 

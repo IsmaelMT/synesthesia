@@ -16,6 +16,7 @@ class Main extends AbstractApplication {
 
         super();
         this.audioHandler = new AudioHandler;
+        this.oscHandler = new OSCHandler;
         this.defaultVolume = 0;
 
         this.cubes = [];
