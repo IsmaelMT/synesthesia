@@ -10,16 +10,13 @@ import AudioHandler from 'sound/AudioHandler'
 import KinectServer from 'gestures/KinectServer'
 import OSCHandler from 'sound/OSCHandler'
 
-
 class Main extends AbstractApplication {
 
     constructor() {
 
         super();
-        //this.audioHandler = new AudioHandler;
-	
-	
-	this.defaultVolume = 0;
+        // this.audioHandler = new AudioHandler;
+        this.OSCHandler = new OSCHandler;
 
         this.cubes = [];
 
@@ -43,7 +40,7 @@ class Main extends AbstractApplication {
         }
         //c.position.set(0, 0, 50);
 
-	this.kinectServer = new KinectServer();
+	    // this.kinectServer = new KinectServer();
 
         this.initPostprocessing();
         this.initGui();
@@ -95,10 +92,13 @@ class Main extends AbstractApplication {
         let size;
         let new_volume = 0;
         let beat;
+
+        console.log("le color " + this.OSCHandler.getColor());
+
         // let peakDetect = false;
         
-        new_volume = this.audioHandler.smoothedVolume(new_volume);
-        beat = this.audioHandler.peakDetected();
+        // new_volume = this.audioHandler.smoothedVolume(new_volume);
+        // beat = this.audioHandler.peakDetected();
         
         size = new_volume * 100;
         // beat = this.audioHandler.beatDetected(new_volume * 100);

@@ -6,7 +6,7 @@ class KinectServer {
 
 
     constructor() {
-    	console.log("HEY");
+    	console.log("Kinect constructor");
     }
 
 }
