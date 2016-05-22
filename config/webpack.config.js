@@ -41,8 +41,10 @@ let config = {
         extensions: ['', '.js'],
         alias: {
             "kinect": path.join(__dirname, "..", "libs", "kinect", "Kinect-1.8.0.js"),
-            "kinect_worker": path.join(__dirname, "..", "libs", "kinect", "KinectWorker-1.8.0.js"),
-            "osc-browser": path.join(__dirname, "..", "libs", "osc", "osc-browser.js")
+            "kinect_worker": path.join(__dirname, "..", "libs", 
+                                       "kinect", "KinectWorker-1.8.0.js"),
+            "osc-browser": path.join(__dirname, "..", "libs", "osc", "osc-browser.js"),
+            "pixi": path.join(__dirname, "..", "libs", "pixi", "pixi.js")
         }
     },
 
@@ -100,7 +102,12 @@ let config = {
             {
 	            test:  path.join(__dirname, "..", "libs", "osc", "osc-browser.js"),
 	            loader: "script"
+	        },
+            {
+	            test:  path.join(__dirname, "..", "libs", "pixi", "pixi.js"),
+	            loader: "script"
 	        }
+
         ],
      },
 

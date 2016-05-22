@@ -1,4 +1,6 @@
 import "osc-browser"
+import colors from "musical-scale-colors"
+import tonal from "tonal"
 
 class OSCHandler {
 
@@ -9,7 +11,6 @@ class OSCHandler {
         
         this.port.on("message", (oscMessage) => {
             let handler;  
-            // console.log("message", oscMessage);
             // Parse and route messages
             handler = this._OSCUrlParser(oscMessage.address);       
            
@@ -18,7 +19,7 @@ class OSCHandler {
                 handler(oscMessage);
             }
             else {
-                console.log("No handler found");
+                // console.log("No handler found");
             }
 
         });
@@ -29,15 +30,68 @@ class OSCHandler {
 
     
     _handleColor(oscMessage) {
-        this.color = oscMessage.args[0];
-        console.log("Color: " + this.color);
+        console.log("color");
+
+        let pitch = oscMessage.args[0];
+        let note = tonal.fromFreq(pitch);
+        let chroma = tonal.chroma(note);
+
+        // this.color = colors.louisBertrandCastel[chroma];
+        this.color = colors.aScriabin[chroma];
+    }
+
+
+    _handleParticles(oscMessage) {
+        let particlesPromise = new Promise((resolve, reject) => {
+            if (!isNaN(oscMessage.args[0])) {
+                resolve(oscMessage.args[0]);
+            }
+            else {
+                reject(0);
+            }
+        })
+
+        particlesPromise.then(
+            (val) => { this.particles = val },
+            (val) => { this.particles = val }
+        )
+
+    }
+
+    _handleScale(oscMessage) {
+
+        let scalePromise = new Promise((resolve, reject) => {
+            if (!isNaN(oscMessage.args[0])) {
+                resolve(oscMessage.args[0]);
+            }
+            else {
+                reject(1);
+            }
+        })
+        
+        scalePromise.then(
+            (val) => { this.scale = val },
+            (val) => { this.scale = val }
+        )
+    }
+
+    _handleDistance(oscMessage) {
+        this.distance = oscMessage.args[0];
+    }
+
+    _handleBandviz(oscMessage) {
+        this.bandviz = oscMessage.args;
     }
 
 
     _OSCUrlParser(address) {
         let urls = {
             "visuals": {
-                "color": this._handleColor.bind(this)
+                "color": this._handleColor.bind(this),
+                "scale": this._handleScale.bind(this),
+                "particles": this._handleParticles.bind(this),
+                "distance": this._handleDistance.bind(this),
+                "bandviz": this._handleBandviz.bind(this)
             }
         };
 
@@ -59,10 +113,29 @@ class OSCHandler {
     }    
 
     getColor() {
+        // console.log("returning color"+ this.scale);
         return this.color;
     }
 
+    getScale() {
+        // console.log("returning scale" + parseInt(this.scale));
+        return this.scale;
+    }
 
+    getParticles() {
+        // console.log("oartic " + this.particles);
+        return this.particles;
+    }
+
+    getDistance() {
+        // console.log("distance " + this.distance);
+        return this.distance;
+    }
+
+    getBandviz() {
+        // console.log(this.bandviz);
+        return this.bandviz;
+    }
 
 }
 

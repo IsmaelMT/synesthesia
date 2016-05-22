@@ -33,10 +33,12 @@
     "jquery": "^2.2.3",
     "json-loader": "^0.5.4",
     "minimist": "^1.2.0",
+    "musical-scale-colors": "^2.0.1",
     "osc": "^2.0.3",
     "pixi": "^0.3.1",
     "script-loader": "^0.7.0",
     "socket.io": "^1.4.6",
+    "tonal": "^0.50.2",
     "webpack": "^1.12.15",
     "webpack-dev-server": "^1.14.0"
   },

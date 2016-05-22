@@ -1,12 +1,13 @@
-import PIXI from "pixi"
+import "pixi"
 import dat from "dat-gui"
 import $ from "jquery"
 
 class AudioCloud {
 
-    constructor() {
+    constructor(OSCHandler) {
         let k 
         let v
+
 
         this.modes = ["cubic", "conic"];
 
@@ -15,7 +16,7 @@ class AudioCloud {
             yellowGreen: [0xF7F6AF, 0x9BD6A3, 0x4E8264, 0x1C2124, 0xD62822],
             yellowRed: [0xECD078, 0xD95B43, 0xC02942, 0x542437, 0x53777A],
             blueGray: [0x343838, 0x005F6B, 0x008C9E, 0x00B4CC, 0x00DFFC],
-            blackWhite: [0xFFFFFF, 0x000000, 0xFFFFFF, 0x000000, 0xFFFFFF]
+            blackWhite: [0xFFFFFF, 0x000000, 0xFFFFFF, 0x000000, 0xFFFFFF],
         };
 
         this.themesNames = [];
@@ -31,7 +32,8 @@ class AudioCloud {
             radius: 3,
             distance: 600,
             size: .5,
-            numParticles: 5000,
+            numParticles: 5500,
+            maxExtraParticles: 500,
             sizeW: 1,
             sizeH: 1,
             radiusParticle: 60,
@@ -69,11 +71,12 @@ class AudioCloud {
         this.analiserDataArray = null;
 
         this.gui = null;
+        this.OSCHandler = OSCHandler;
     }
 
     init() {
         this.initGestures();
-        this.initAudio();
+        // this.initAudio();
         this.resize();
         this.build();
         this.resize();
@@ -90,17 +93,20 @@ class AudioCloud {
         modeController = this.gui.add(this.params, 'mode', this.modes);
         modeController.onChange(function(value) {
             return this.changeMode(value);
-        });
+        }.bind(this));
         themeController = this.gui.add(this.params, 'theme', this.themesNames);
         themeController.onChange(function(value) {
             return this.changeTheme(this.params.theme);
-        });
-        this.gui.add(this.params, 'radius', 1, 8);
-        this.gui.add(this.params, 'distance', 100, 1000);
+        }.bind(this));
+        
+        this.gui.add(this.params, 'radius', 1, 10);
+        this.gui.add(this.params, 'distance', 100, 1000).listen();
+        
         sizeController = this.gui.add(this.params, 'size', 0, 1);
+        
         return sizeController.onChange(function(value) {
             return this.resize(value);
-        });
+        }.bind(this));
     };
 
     initAudio() {
@@ -126,7 +132,7 @@ class AudioCloud {
     }
 
     startAnimation() {
-        return requestAnimFrame(this.update);
+        return requestAnimationFrame(this.update.bind(this));
     }
 
     initGestures() {
@@ -137,11 +143,11 @@ class AudioCloud {
     }
 
     build() {
-        this.stage = new PIXI.this.stage(0x000000);
-        this.renderer = PIXI.autoDetectRenderer.renderer(
+        this.stage = new PIXI.Stage(0x000000);
+        this.renderer = PIXI.autoDetectRenderer(
             $(window).width(), $(window).height());
         $(document.body).append(this.renderer.view);
-        this.texCircle = this.createCricleTex();
+        this.texCircle = this.createCircleTex();
         return this.buildCircles();
     }
 
@@ -167,12 +173,15 @@ class AudioCloud {
         return this.changeTheme(this.params.theme);
     }
 
-    createCricleTex() {
+    createCircleTex() {
         let gCircle;
+            
+
         gCircle = new PIXI.Graphics();
         gCircle.beginFill(0xFFFFFF);
         gCircle.drawCircle(0, 0, this.params.radiusParticle);
         gCircle.endFill();
+ 
         return gCircle.generateTexture();
     }
 
@@ -185,7 +194,7 @@ class AudioCloud {
         this.params.sizeH = this.windowH * this.params.size;
         this.changeMode(this.params.mode);
         if (this.renderer) {
-            return this.renderer.this.resize(this.windowW, this.windowH);
+            return this.renderer.resize(this.windowW, this.windowH);
         }
     }
 
@@ -261,34 +270,83 @@ class AudioCloud {
     }
 
     update() {
-        let angle, circle, dist, dx, dy, i, n, r, scale, xpos, ypos, _i, _ref;
-        requestAnimFrame(this.update);
+        let angle, circle, dist, dx, dy, i, n, r, scale, xpos, ypos, _i, _ref, band;
+        requestAnimationFrame(this.update.bind(this));
         
-        if (this.analiserDataArray) {
-            this.analyser.getByteFrequencyData(this.analiserDataArray);
+        // Get radius from amplitude  
+        let OSCscale = this.OSCHandler.getScale();
+
+        // Loudness particles
+        let extra_particles = this.OSCHandler.getParticles() || 0;
+        let particles_to_draw = this.params.numParticles - this.params.maxExtraParticles;
+        let OSCdistance = this.OSCHandler.getDistance();
+        let bandsArray = this.OSCHandler.getBandviz();
+        let color = this.OSCHandler.getColor();
+        console.log("color: " + color);
+
+
+        // if (OSCscale) {
+        //     this.params.radius = OSCscale;
+        // }
+
+        if (OSCdistance) {
+            this.params.distance = OSCdistance;
         }
+
+
+        // if (this.analiserDataArray) {
+        //     this.analyser.getByteFrequencyData(this.analiserDataArray);
+        // }
 
         if (this.mouseX > 0 && this.mouseY > 0) {
             this.mousePt.x += (this.mouseX - this.mousePt.x) * 0.03;
             this.mousePt.y += (this.mouseY - this.mousePt.y) * 0.03;
         }
 
-        for (i = _i = 0, _ref = this.params.numParticles - 1; 
+        for (i = _i = 0, _ref = particles_to_draw + extra_particles - 1; 
                 0 <= _ref ? _i <= _ref : _i >= _ref; 
                 i = 0 <= _ref ? ++_i : --_i) {
 
             circle = this.arrCircles[i];
             
-            if (this.analiserDataArray) {
-                n = this.analiserDataArray[circle.indexBand];
-                scale = (n / 256) * circle.s * 2;
-            } else {
+            
+            if (color) {
+                circle.tint = color;
+            }
+
+            if (bandsArray) {
                 scale = circle.s * .1;
+                // scale = bandsArray[i % 25];
+                // console.log("band " + circle.indexBand);
+                // console.log("mod " +circle.indexBand % 25);
+                //
+                // // scale = (n / 256) * circle.s * 2;
+                // // console.log(bandsArray);
+                // // console.log(n);
+                // console.log("scale: "+scale);
+                
+                band = bandsArray[i % 18]
+            }
+            else {
+                scale = circle.s * .1;
+                band = 2;
             }
             
-            scale *= this.params.radius;
+            // if (this.analiserDataArray) {
+            //     n = this.analiserDataArray[circle.indexBand];
+            //     scale = (n / 256) * circle.s * 2;
+            // } else {
+            //     scale = circle.s * .1;
+            // }
+            
+            // For guitar the first 18 bands are the relevant ones.
+            
+            scale *= bandsArray[i % 18];
+            // console.log("scake: " + scale);
             circle.scale.x += (scale - circle.scale.x) * 0.3;
             circle.scale.y = circle.scale.x;
+            // console.log(circle.scale.x);
+            // console.log(circle.scale.y);
             dx = this.mousePt.x - circle.xInit;
             dy = this.mousePt.y - circle.yInit;
             dist = Math.sqrt(dx * dx + dy * dy);
@@ -299,6 +357,9 @@ class AudioCloud {
             circle.position.x += (xpos - circle.position.x) * 0.1;
             circle.position.y += (ypos - circle.position.y) * 0.1;
         }
+
         return this.renderer.render(this.stage);
     }
 }
+
+export default AudioCloud;
