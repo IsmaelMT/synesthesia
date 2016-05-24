@@ -10,9 +10,9 @@ class AbstractApplication{
 
         // Camera
         this._camera = new THREE.PerspectiveCamera(70, 
-                                                   window.innerWidth / window.innerHeight, 
-                                                   1, 
-                                                   1000 );
+                                                window.innerWidth / window.innerHeight, 
+                                                1, 
+                                                1000 );
         this._camera.position.z = 400;
         
         // Renderer
@@ -22,7 +22,8 @@ class AbstractApplication{
 
         document.body.appendChild(this._renderer.domElement );
 
-        this._controls = new THREE.OrbitControls( this._camera, this._renderer.domElement );
+        this._controls = new THREE.OrbitControls( this._camera, 
+                                                 this._renderer.domElement );
         this._controls.enableDamping = true;
         this._controls.dampingFactor = 0.25;
         this._controls.enableZoom = false;

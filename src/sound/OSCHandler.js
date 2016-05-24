@@ -1,5 +1,6 @@
 import "osc-browser"
 import colors from "musical-scale-colors"
+import hexRGB from "hex-rgb"
 import tonal from "tonal"
 
 class OSCHandler {
@@ -13,7 +14,6 @@ class OSCHandler {
             let handler;  
             // Parse and route messages
             handler = this._OSCUrlParser(oscMessage.address);       
-           
 
             if (handler != null) {
                 handler(oscMessage);
@@ -30,14 +30,12 @@ class OSCHandler {
 
     
     _handleColor(oscMessage) {
-        console.log("color");
-
         let pitch = oscMessage.args[0];
         let note = tonal.fromFreq(pitch);
         let chroma = tonal.chroma(note);
 
-        // this.color = colors.louisBertrandCastel[chroma];
-        this.color = colors.aScriabin[chroma];
+        // this.color = hexRGB(colors.aScriabin[chroma].toString(16));
+        this.color = hexRGB(colors.louisBertrandCastel[chroma].toString(16));
     }
 
 
@@ -83,6 +81,26 @@ class OSCHandler {
         this.bandviz = oscMessage.args;
     }
 
+    _handleCamera(oscMessage) {
+        this.cameraPosition = {
+            x: oscMessage.args[0],
+            y: oscMessage.args[1],
+            z: oscMessage.args[2]
+        }
+
+        let trackEvent = new CustomEvent("usertrack", { 
+            detail: this.cameraPosition
+        });
+        
+
+        window.dispatchEvent(trackEvent);
+    }
+
+    _handleBrightness(oscMessage) {
+        // console.log("brightness");
+        // console.log(oscMessage.args[0]);
+        this.brightness = oscMessage.args[0];
+    }
 
     _OSCUrlParser(address) {
         let urls = {
@@ -91,7 +109,9 @@ class OSCHandler {
                 "scale": this._handleScale.bind(this),
                 "particles": this._handleParticles.bind(this),
                 "distance": this._handleDistance.bind(this),
-                "bandviz": this._handleBandviz.bind(this)
+                "bandviz": this._handleBandviz.bind(this),
+                "camera": this._handleCamera.bind(this),
+                "brightness": this._handleBrightness.bind(this)
             }
         };
 
@@ -135,6 +155,14 @@ class OSCHandler {
     getBandviz() {
         // console.log(this.bandviz);
         return this.bandviz;
+    }
+
+    getCameraPosition() {
+        return this.cameraPosition;
+    }
+
+    getBrightness() {
+        return this.brightness;
     }
 
 }
