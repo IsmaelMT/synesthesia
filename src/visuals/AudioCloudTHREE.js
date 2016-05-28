@@ -97,7 +97,7 @@ class AudioCloud extends AbstractApplication{
         
         this.engine = new ParticleEngine(this._scene);
         
-        this.engine.setValues(Examples.fountain);
+        this.engine.setValues(Examples.fireball);
     }
 
     init() {

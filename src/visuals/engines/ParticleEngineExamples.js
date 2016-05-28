@@ -65,6 +65,7 @@ import THREE from "three"
 import Tween from "./Tween"
 
 let Type = Object.freeze({ "CUBE":1, "SPHERE":2 });
+
 let Examples =
 {
 

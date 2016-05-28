@@ -158,6 +158,12 @@ class ParticleEngine {
         this.particleMesh = new THREE.Mesh();
 
         this.scene = scene;
+
+        // var geometry = new THREE.CircleGeometry( 5, 32 );
+        // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+        // var circle = new THREE.Mesh( geometry, material );
+        // this.scene.add( circle );
+
     }
 	
     setValues( parameters ) {
@@ -325,12 +331,17 @@ class ParticleEngine {
 
     update(dt) {
         let recycleIndices = [];
-        
-        this.particleGeometry.attributes.position.needsUpdate = true;
-        
+        //
+        // this.particleGeometry.attributes.position.needsUpdate = true;
+        // this.particleGeometry.attributes.customVisible.needsUpdate = true;
+        // this.particleGeometry.attributes.customAngle.needsUpdate = true;
+        // this.particleGeometry.attributes.customSize.needsUpdate = true;
+        // this.particleGeometry.attributes.customColor.needsUpdate = true;
+        // this.particleGeometry.attributes.customOpacity.needsUpdate = true;
+        //
         // update particle data
         for (let i = 0, j = 0; i < this.particleCount; i++, j+=3) {
-            if ( this.particleArray[i].alive ) {
+            if (this.particleArray[i].alive ) {
                 this.particleArray[i].update(dt);
 
                 // check if particle should expire
@@ -340,8 +351,6 @@ class ParticleEngine {
                     recycleIndices.push(i);
                 }
      
-                this.particleArray[i] = this.createParticle();
-                
                 this.positions[j] = this.particleArray[i].position.x;
                 this.positions[j + 1] = this.particleArray[i].position.y;
                 this.positions[j + 2] = this.particleArray[i].position.z;
@@ -391,8 +400,9 @@ class ParticleEngine {
             if  ( endIndex > this.particleCount ) 
                   endIndex = this.particleCount; 
                   
-            for (let i = startIndex; i < endIndex; i++)
-                this.particleArray[i].alive = 1.0;		
+            for (let i = startIndex; i < endIndex; i++) {
+                this.particleArray[i].alive = 1.0;
+            }
         }
 
         // if any particles have died while the emitter is still running, 
@@ -418,7 +428,7 @@ class ParticleEngine {
     }
 
     destroy() {
-        // this.scene.remove( this.particleMesh );
+        this.scene.remove( this.particleMesh );
     }
 }
 
