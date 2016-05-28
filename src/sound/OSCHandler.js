@@ -1,5 +1,6 @@
 import "osc-browser"
-import colors from "musical-scale-colors"
+import musicalColors from "musical-scale-colors"
+import Color from "color"
 import hexRGB from "hex-rgb"
 import tonal from "tonal"
 
@@ -35,8 +36,13 @@ class OSCHandler {
         let chroma = tonal.chroma(note);
 
         // this.color = hexRGB(colors.aScriabin[chroma].toString(16));
-        // this.color = hexRGB(colors.louisBertrandCastel[chroma].toString(16));
-        this.color = colors.louisBertrandCastel[chroma];
+        
+        // this.color = hexRGB(musicalColors.louisBertrandCastel[chroma].toString(16));
+        // this.color = colors.louisBertrandCastel[chroma];a
+        
+        let hexColor = musicalColors.aScriabin[chroma].toString(16);
+
+        this.color = Color("#"+hexColor);
     }
 
 

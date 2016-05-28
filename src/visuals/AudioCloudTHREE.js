@@ -183,7 +183,6 @@ class AudioCloud extends AbstractApplication{
         let TRANSLATION_SPEED = 300;
 
         return window.addEventListener('usertrack', function(e) {
-            console.log(e.detail);
             this.camX = (e.detail.x * TRANSLATION_SPEED);
             this.camZ = (e.detail.z * TRANSLATION_SPEED) * -1;
             return this.camY = (e.detail.y * TRANSLATION_SPEED);
@@ -441,7 +440,6 @@ class AudioCloud extends AbstractApplication{
      	
         
 	    let dt = this.clock.getDelta();
-        this.engine.update( dt * 0.5 );   
         
         let angle, circle, dist, dx, dy, i, n, r, scale, xpos, ypos, _i, _ref, band, zpos;
         // requestAnimationFrame(this.animate.bind(this));
@@ -450,8 +448,8 @@ class AudioCloud extends AbstractApplication{
         let OSCscale = this.OSCHandler.getScale();
 
         // Loudness particles
-        let extra_particles = this.OSCHandler.getParticles() || 0;
-        let particles_to_draw = this.params.numParticles - this.params.maxExtraParticles;
+        // let extra_particles = this.OSCHandler.getParticles() || 0;
+        // let particles_to_draw = this.params.numParticles - this.params.maxExtraParticles;
         let OSCdistance = this.OSCHandler.getDistance();
         let bandsArray = this.OSCHandler.getBandviz();
         let color = this.OSCHandler.getColor();
@@ -517,6 +515,7 @@ class AudioCloud extends AbstractApplication{
             // circle.position.setY(circle.position.y + (ypos - circle.position.y) * 0.2);
             // // circle.position.setZ(circle.position.z + (zpos - circle.position.z) * 0.2);
         }
+        this.engine.update( dt * 0.5, color.values.rgb, bandsArray);   
 
 
         if (this.params.usePostProcessing) {

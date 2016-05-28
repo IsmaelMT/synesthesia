@@ -329,8 +329,10 @@ class ParticleEngine {
         this.scene.add( this.particleMesh );
     }
 
-    update(dt) {
+    update(dt, color, bandsArray) {
         let recycleIndices = [];
+        
+        
         //
         // this.particleGeometry.attributes.position.needsUpdate = true;
         // this.particleGeometry.attributes.customVisible.needsUpdate = true;
@@ -356,13 +358,18 @@ class ParticleEngine {
                 this.positions[j + 2] = this.particleArray[i].position.z;
 
                 this.visibles[i] = this.particleArray[i].alive;
-                
-                this.colors[j] = this.particleArray[i].color.r;
-                this.colors[j + 1] = this.particleArray[i].color.g;
-                this.colors[j + 2] = this.particleArray[i].color.b;
+ 
+                // Use pitch colors
+                this.colors[j] = color[0] / 360;
+                this.colors[j + 1] = color[1] / 100;
+                this.colors[j + 2] = color[2] / 100;
+               
+                // this.colors[j] = this.particleArray[i].color.r;
+                // this.colors[j + 1] = this.particleArray[i].color.g;
+                // this.colors[j + 2] = this.particleArray[i].color.b;
                 
                 this.opacities[i] = this.particleArray[i].opacity;
-                this.sizes[i] = this.particleArray[i].size;
+                this.sizes[i] = this.particleArray[i].size *  bandsArray[i % 18] / 10;
                 this.angles[i] = this.particleArray[i].angle;
 
             }		
