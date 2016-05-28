@@ -35,7 +35,8 @@ class OSCHandler {
         let chroma = tonal.chroma(note);
 
         // this.color = hexRGB(colors.aScriabin[chroma].toString(16));
-        this.color = hexRGB(colors.louisBertrandCastel[chroma].toString(16));
+        // this.color = hexRGB(colors.louisBertrandCastel[chroma].toString(16));
+        this.color = colors.louisBertrandCastel[chroma];
     }
 
 

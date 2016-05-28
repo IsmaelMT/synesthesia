@@ -6,19 +6,25 @@ class AbstractApplication{
     constructor(){
         
         // Scene
-        this._scene = new THREE.Scene();
+        this._scene = new THREE.Scene({ antialias: true });
+        this._scene.fog = new THREE.FogExp2( 0x000000, 0.0003 );
+		this._scene.fog.color.setHSL( 0.51, 0.4, 0.01 );
+
 
         // Camera
-        this._camera = new THREE.PerspectiveCamera(70, 
+        this._camera = new THREE.PerspectiveCamera(45, 
                                                 window.innerWidth / window.innerHeight, 
                                                 1, 
-                                                1000 );
-        this._camera.position.z = 400;
+                                                5000);
+
+        this._camera.position.set(0,200,400);
+        // this._camera.position.z = 800;
         
         // Renderer
-        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this._renderer.setPixelRatio( window.devicePixelRatio );
         this._renderer.setSize( window.innerWidth, window.innerHeight );
+        this._renderer.setClearColor( this._scene.fog.color );
 
         document.body.appendChild(this._renderer.domElement );
 

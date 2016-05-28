@@ -3,6 +3,7 @@ import $ from "jquery"
 import dat from "dat-gui"
 import extraFilters from 'pixi-extra-filters'
 import Kinect from "kinect"
+import Utils from "../utils/Utils"
 import THREE from "three"
 
 
@@ -155,7 +156,7 @@ class AudioCloud {
         // this.mouseY = 100;
         return window.addEventListener('usertrack', function(e) {
  
-            let cameraPosition = this._3DCoordTo2D(e.detail.x, e.detail.y, 
+            let cameraPosition = Utils._3DCoordTo2D(e.detail.x, e.detail.y, 
                                       e.detail.z, this.windowW, this.windowH)
 
             this.mouseX = cameraPosition.x;
@@ -303,19 +304,6 @@ class AudioCloud {
         }
 
         return _results;
-    }
-
-    _3DCoordTo2D(x, y, z, width, height) {
-        let p = new THREE.Vector3(x, y, z);
-        let vector = p.project(this._camera);
-
-        vector.x = (vector.x + 1) / 2 * width;
-        vector.y = -(vector.y - 1) / 2 * height;
-
-        return {
-            x: vector.x,
-            y: vector.y
-        };
     }
 
 

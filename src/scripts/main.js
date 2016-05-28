@@ -11,8 +11,8 @@ class Main  {
         // this.audioHandler = new AudioHandler;
         this.OSCHandler = new OSCHandler;
         // this.visual = new Cubes(this.OSCHandler);
-        // this.visual = new AudioCloudTHREE(this.OSCHandler);
-        this.visual = new AudioCloud(this.OSCHandler);
+        this.visual = new AudioCloudTHREE(this.OSCHandler);
+        // this.visual = new AudioCloud(this.OSCHandler);
         this.visual.init()
     }
 
