@@ -326,7 +326,9 @@ class ParticleEngine {
                                               this.particleMaterial );
         this.particleMesh.dynamic = true;
         this.particleMesh.sortParticles = true;
-        this.scene.add( this.particleMesh );
+
+        return this.particleMesh;
+        // this.scene.add( this.particleMesh );
     }
 
     update(dt, color, bandsArray) {

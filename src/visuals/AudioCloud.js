@@ -85,8 +85,11 @@ class AudioCloud {
         this.analiserDataArray = null;
 
         this.renderer = null;
+            
+        this.utils = new Utils();
 
         this.gui = null;
+
         this.OSCHandler = OSCHandler;
     }
 
@@ -156,8 +159,8 @@ class AudioCloud {
         // this.mouseY = 100;
         return window.addEventListener('usertrack', function(e) {
  
-            let cameraPosition = Utils._3DCoordTo2D(e.detail.x, e.detail.y, 
-                                      e.detail.z, this.windowW, this.windowH)
+            let cameraPosition = this.utils._3DCoordTo2D(e.detail.x, e.detail.y, 
+                    e.detail.z, this._camera, this.windowW, this.windowH);
 
             this.mouseX = cameraPosition.x;
             return this.mouseY = cameraPosition.y;

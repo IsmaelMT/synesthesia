@@ -40,7 +40,7 @@ class OSCHandler {
         // this.color = hexRGB(musicalColors.louisBertrandCastel[chroma].toString(16));
         // this.color = colors.louisBertrandCastel[chroma];a
         
-        let hexColor = musicalColors.aScriabin[chroma].toString(16);
+        let hexColor = musicalColors.louisBertrandCastel[chroma].toString(16);
 
         this.color = Color("#"+hexColor);
     }
