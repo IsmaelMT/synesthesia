@@ -103,10 +103,38 @@ class OSCHandler {
         window.dispatchEvent(trackEvent);
     }
 
+    _handleHandL(oscMessage) {
+        this.handLPosition = {
+            x: oscMessage.args[0],
+            y: oscMessage.args[1],
+            z: oscMessage.args[2]
+        }
+
+        // let trackEvent = new CustomEvent("usertrack", { 
+        //     detail: this.cameraPosition
+        // });
+        //
+        // window.dispatchEvent(trackEvent);
+    }
+
+    _handleSwitch(oscMessage) {
+        
+        this.switch = {
+            x: oscMessage.args[0],
+            y: oscMessage.args[1],
+            z: oscMessage.args[2]
+        }
+    }
+
+    _handleChangeViz(oscMessage) {
+    
+    }
+
+
     _handleBrightness(oscMessage) {
         // console.log("brightness");
         // console.log(oscMessage.args[0]);
-        this.brightness = oscMessage.args[0];
+        this.brightness = oscMessage.args[0] >= 1 ? 1 : oscMessage.args[0];
     }
 
     _OSCUrlParser(address) {
@@ -118,7 +146,10 @@ class OSCHandler {
                 "distance": this._handleDistance.bind(this),
                 "bandviz": this._handleBandviz.bind(this),
                 "camera": this._handleCamera.bind(this),
-                "brightness": this._handleBrightness.bind(this)
+                "brightness": this._handleBrightness.bind(this),
+                "hand_l": this._handleHandL.bind(this),
+                "change_viz": this._handleChangeViz.bind(this),
+                "switch": this._handleSwitch.bind(this)
             }
         };
 
@@ -170,6 +201,14 @@ class OSCHandler {
 
     getBrightness() {
         return this.brightness;
+    }
+
+    getHandL() {
+        return this.handLPosition;
+    }
+
+    getSwitch() {
+        return this.switch;
     }
 
 }

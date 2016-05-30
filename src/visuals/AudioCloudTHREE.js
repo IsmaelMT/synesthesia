@@ -11,53 +11,6 @@ import Utils from "../utils/Utils"
 import WAGNER from '@superguigui/wagner/'
 import ZoomBlurPassfrom from '@superguigui/wagner/src/passes/zoom-blur/ZoomBlurPass'
 
-//
-// let vertexShader = 
-// [
-// "attribute vec3  customColor;",
-// "attribute float customOpacity;",
-// "attribute float customSize;",
-// "attribute float customAngle;",
-// "attribute float customVisible;",  // float used as boolean (0 = false, 1 = true)
-// "varying vec4  vColor;",
-// "varying float vAngle;",
-// "void main()",
-// "{",
-// 	"if ( customVisible > 0.5 )", // true
-// 		"vColor = vec4( customColor, customOpacity );", 
-//         //set color associated to vertex; use later in fragment shader.
-// 	"else",	// false
-// 		"vColor = vec4(0.0, 0.0, 0.0, 0.0);", //make particle invisible.
-// 		
-// 	"vAngle = customAngle;",
-//
-// 	"vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
-// 	"gl_PointSize = customSize * ( 300.0 / length( mvPosition.xyz ) );",     
-//     // scale particles as objects in 3D space
-// 	"gl_Position = projectionMatrix * mvPosition;",
-// "}"
-// ].join("\n");
-//
-// let fragmentShader =
-// [
-// "uniform sampler2D texture;",
-// "varying vec4 vColor;", 	
-// "varying float vAngle;",   
-// "void main()", 
-// "{",
-// 	"gl_FragColor = vColor;",
-// 	
-// 	"float c = cos(vAngle);",
-// 	"float s = sin(vAngle);",
-// 	"vec2 rotatedUV = vec2(c * (gl_PointCoord.x - 0.5) + s * (gl_PointCoord.y - 0.5) + 0.5,", 
-// 	                      "c * (gl_PointCoord.y - 0.5) - s * (gl_PointCoord.x - 0.5) + 0.5);",  // rotate UV coordinates to rotate texture
-//     	"vec4 rotatedTexture = texture2D( texture,  rotatedUV );",
-// 	"gl_FragColor = gl_FragColor * rotatedTexture;",    
-//     // sets an otherwise white particle texture to desired color
-// "}"
-// ].join("\n");
-
-
 
 let vertexShader = 
     ["uniform float time;",
@@ -123,8 +76,8 @@ class AudioCloud extends AbstractApplication{
             distance: 600,
             size: .5,
             numParticles: 600,
+            scale: 1, // Scale of size updating for the shinny group
             numShinnyParticles: 50,
-            maxExtraParticles: 500,
             sizeW: 1,
             sizeH: 1,
             radiusParticle: 60,
@@ -135,6 +88,8 @@ class AudioCloud extends AbstractApplication{
             useBloom: true
 
         };
+
+        this.shinnyParticleGroupShapes = [2.0, 3.0, 7.0, 10.0, 20.0]
 
         this.particleParameters = {
             fountain:   () => { this.restartEngine( Examples.fountain   ); },
@@ -155,6 +110,12 @@ class AudioCloud extends AbstractApplication{
         this.camY = 0;
         
         this.camZ = 0;
+        
+        this.camXinit = this._camera.position.x;
+        
+        this.camYinit = this._camera.position.y;
+        
+        this.camZinit = this._camera.position.z;
 
         this.mousePt = new THREE.Vector3();
 
@@ -174,10 +135,19 @@ class AudioCloud extends AbstractApplication{
 
         this.clock = new THREE.Clock();
         
+        this.engine = new ParticleEngine(this._scene);
+
         this.starTunnelEngine = new ParticleEngine(this._scene);
         
         this.firefliesEngine = new ParticleEngine(this._scene);
 
+        this.visual1 = false;
+        
+        this.visualIndex = 0;
+
+        this.frameCount = 0;
+
+        this.activateFrameCount = false;
     }
 
     init() {
@@ -191,7 +161,8 @@ class AudioCloud extends AbstractApplication{
         // this.buildCircles();
         // this.buildFlares();
         // this.buildShinnyParticlesPath();
-        this.buildShinnyParticlesGroup();
+        // this.buildShinnyParticlesGroup();
+        this.buildVisual1();
         this.resize();
         this.mousePt.setX(0);
         this.mousePt.setY(0);
@@ -201,6 +172,37 @@ class AudioCloud extends AbstractApplication{
         this.startAnimation();
         return this.initGUI();
     }
+
+
+    initPostprocessing() {
+        this._renderer.autoClearColor = true;
+        this.composer = new WAGNER.Composer(this._renderer);
+        this.fxaaPass = new FXAAPass();
+        this.boxBlurPass = new BoxBlurPass(3, 3);
+        this.bloomPass = new MultiPassBloomPass({
+            blurAmount: 2,
+            applyZoomBlur: true
+        });
+    }
+
+    initGestures() {
+
+        let TRANSLATION_SPEED = 300;
+
+        return window.addEventListener('usertrack', function(e) {
+            
+            // let cameraPosition = this.utils._3DCoordTo2D(e.detail.x, e.detail.y, 
+            //         e.detail.z, this._camera, this.windowW, this.windowH);
+            //
+            // this.cameraPosX = cameraPosition.x;
+            // this.cameraPosY = cameraPosition.y;
+
+            this.camX = (e.detail.x * TRANSLATION_SPEED);
+            this.camZ = (e.detail.z * TRANSLATION_SPEED);
+            return this.camY = (e.detail.y * TRANSLATION_SPEED);
+        }.bind(this), false);
+    }
+
 
     buildFireflies() {
         this.firefliesEngine.setValues(Examples.fireflies);
@@ -214,112 +216,135 @@ class AudioCloud extends AbstractApplication{
         this._scene.add(this.starTunnel);
     }
 
+    buildVisual1() {
+        this.visual1 = true;
+        this.buildFireflies();
+        this.buildShinnyParticlesGroup();
+    }
 
-    buildShinnyParticlesPath() {
-
-        this.pathParticleGeometry = new THREE.BufferGeometry();
-        // for (let i = 0; i < 100; i++)
-        //     this.particleGeometry.vertices.push( new THREE.Vector3(0,0,0) );
-
-        let discTexture = new THREE.TextureLoader().load( 'images/spark.png' );
-
-        // properties that may vary from particle to particle. 
-        // these values can only be accessed in vertex shaders! 
-        //  (pass info to fragment shader via vColor.)
-
-        this.pathParticleCount = 100;
-        let colors = new Float32Array(this.pathParticleCount * 3);
-        let offsets = new Float32Array(this.pathParticleCount);
-        let positions = new Float32Array(this.pathParticleCount * 3);
-
-        for(let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3 ) {
-            
-            colors[i] = 1 - v / this.pathParticleCount;
-            colors[i + 1] = 1.0;
-            colors[i + 2] = 0.5;
-
-            positions[i] = 0.0;
-            positions[i + 1] = 0.0;
-            positions[i + 2] = 0.0;
-            offsets[v] = 6.282 * (v / this.pathParticleCount); 
-            // not really used in shaders, move elsewhere
-        }
-        
-        this.pathParticleGeometry.addAttribute("customColor",
-            new THREE.BufferAttribute(colors, 3));
-
-        this.pathParticleGeometry.addAttribute("position",
-            new THREE.BufferAttribute(positions, 3));
-
-        this.pathParticleGeometry.addAttribute("customOffset", 
-            new THREE.BufferAttribute(offsets, 1));
-
-        // values that are constant for all particles during a draw call
-        let uniforms = {
-            time:      { type: "f", value: 1.0 },
-            texture:   { type: "t", value: discTexture },
-        };
-
-        this.pathShaderMaterial = new THREE.ShaderMaterial( {
-            uniforms: 		uniforms,
-            vertexShader:   vertexShader,
-            fragmentShader: fragmentShader,
-            transparent: true
-        });
-
-        let particleCube = new THREE.Points( this.pathParticleGeometry, 
-                                             this.pathShaderMaterial );
-        
-        particleCube.position.set(0, 85, 0);
-        particleCube.dynamic = true;
-        // in order for transparency to work correctly, we need sortParticles = true.
-        //  but this won't work if we calculate positions in vertex shader,
-        //  so positions need to be calculated in the update function,
-        //  and set in the geometry.vertices array
-        particleCube.sortParticles = true;
-        this._scene.add( particleCube );
+    destroyVisual1() {
+        this.firefliesEngine.destroy();
     }
 
 
-    position(t) {
+    buildVisual2() {
+        this.visual1 = true;
+        this.buildFireflies();
+        this.buildShinnyParticlesGroup();
+    }
+
+
+    // buildShinnyParticlesPath() {
+    //
+    //     this.pathParticleGeometry = new THREE.BufferGeometry();
+    //     // for (let i = 0; i < 100; i++)
+    //     //     this.particleGeometry.vertices.push( new THREE.Vector3(0,0,0) );
+    //
+    //     let discTexture = new THREE.TextureLoader().load( 'images/spark.png' );
+    //
+    //     // properties that may vary from particle to particle. 
+    //     // these values can only be accessed in vertex shaders! 
+    //     //  (pass info to fragment shader via vColor.)
+    //
+    //     this.pathParticleCount = 100;
+    //     let colors = new Float32Array(this.pathParticleCount * 3);
+    //     let offsets = new Float32Array(this.pathParticleCount);
+    //     let positions = new Float32Array(this.pathParticleCount * 3);
+    //
+    //     for(let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3 ) {
+    //         
+    //         colors[i] = 1 - v / this.pathParticleCount;
+    //         colors[i + 1] = 1.0;
+    //         colors[i + 2] = 0.5;
+    //
+    //         positions[i] = 0.0;
+    //         positions[i + 1] = 0.0;
+    //         positions[i + 2] = 0.0;
+    //         offsets[v] = 6.282 * (v / this.pathParticleCount); 
+    //         // not really used in shaders, move elsewhere
+    //     }
+    //     
+    //     this.pathParticleGeometry.addAttribute("customColor",
+    //         new THREE.BufferAttribute(colors, 3));
+    //
+    //     this.pathParticleGeometry.addAttribute("position",
+    //         new THREE.BufferAttribute(positions, 3));
+    //
+    //     this.pathParticleGeometry.addAttribute("customOffset", 
+    //         new THREE.BufferAttribute(offsets, 1));
+    //
+    //     // values that are constant for all particles during a draw call
+    //     let uniforms = {
+    //         time:      { type: "f", value: 1.0 },
+    //         texture:   { type: "t", value: discTexture },
+    //     };
+    //
+    //     this.pathShaderMaterial = new THREE.ShaderMaterial( {
+    //         uniforms: 		uniforms,
+    //         vertexShader:   vertexShader,
+    //         fragmentShader: fragmentShader,
+    //         transparent: true
+    //     });
+    //
+    //     let particleCube = new THREE.Points( this.pathParticleGeometry, 
+    //                                          this.pathShaderMaterial );
+    //     
+    //     particleCube.position.set(0, 85, 0);
+    //     particleCube.dynamic = true;
+    //     // in order for transparency to work correctly, we need sortParticles = true.
+    //     //  but this won't work if we calculate positions in vertex shader,
+    //     //  so positions need to be calculated in the update function,
+    //     //  and set in the geometry.vertices array
+    //     particleCube.sortParticles = true;
+    //     this._scene.add( particleCube );
+    // }
+    //
+    //
+    position(t, distance, value) {
         // x(t) = cos(2t)�(3+cos(3t))
         // y(t) = sin(2t)�(3+cos(3t))
         // z(t) = sin(3t)
+        
+        // This is the speed of updating the distance element each iteration
+        
+        this.params.scale = this.params.scale + (distance - this.params.scale) * 0.6;
+      
+        console.log(value);
         return new THREE.Vector3(
-                20.0 * Math.cos(2.0 * t) * (3.0 + Math.cos(3.0 * t)),
-                20.0 * Math.sin(2.0 * t) * (3.0 + Math.cos(3.0 * t)),
-                50.0 * Math.sin(3.0 * t) );
+            this.params.scale * 20.0 * Math.cos(value * t) * (3.0 + Math.cos(3.0 * t)),
+            this.params.scale * 20.0 * Math.sin(value * t) * (3.0 + Math.cos(3.0 * t)),
+            this.params.scale * 50.0 * Math.sin(3.0 * t) );
     }
-
-    updateShinnyParticlesPath () {
-        let t0 = this.clock.getElapsedTime();
-        let timeOffset = null;
-
-        this.pathShaderMaterial.uniforms.time.value = 0.125 * t0;
-
-        let vertices = this.pathParticleGeometry.attributes.position.array;
-        let position;
-
-        for( let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3) {
-
-            timeOffset = this.pathShaderMaterial.uniforms.time.value + 
-                this.pathParticleGeometry.attributes.customOffset.array[v];
-
-            position = this.position(timeOffset);
-
-            vertices[i] = position.x;	
-            vertices[i + 1] = position.y
-            vertices[i + 2] = position.z;
-        }
-
-        this.pathParticleGeometry.addAttribute("position",
-            new THREE.BufferAttribute(vertices, 3));
-
-    }
+    //
+    // updateShinnyParticlesPath () {
+    //     let t0 = this.clock.getElapsedTime();
+    //     let timeOffset = null;
+    //
+    //     this.pathShaderMaterial.uniforms.time.value = 0.125 * t0;
+    //
+    //     let vertices = this.pathParticleGeometry.attributes.position.array;
+    //     let position;
+    //
+    //     for( let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3) {
+    //
+    //         timeOffset = this.pathShaderMaterial.uniforms.time.value + 
+    //             this.pathParticleGeometry.attributes.customOffset.array[v];
+    //
+    //         position = this.position(timeOffset);
+    //
+    //         vertices[i] = position.x;	
+    //         vertices[i + 1] = position.y
+    //         vertices[i + 2] = position.z;
+    //     }
+    //
+    //     this.pathParticleGeometry.addAttribute("position",
+    //         new THREE.BufferAttribute(vertices, 3));
+    //
+    // }
 
 
     buildShinnyParticlesGroup() {
-        
+                
         let shinnyParticle = null;
 
         for (let i = 0; i < this.params.numShinnyParticles; i++) {
@@ -338,13 +363,15 @@ class AudioCloud extends AbstractApplication{
         let particleGroup = new THREE.Object3D();
         this.particleAttributes = { startSize: [], startPosition: [], randomness: [] };
         
-        let totalParticles = 10;
-        let radiusRange = 5;
+        let totalParticles = 20;
+        let radiusRange = 8;
         let spriteMaterial = null;
         let sprite = null;
+        let shellRadio = null;
         for( let i = 0; i < totalParticles; i++ ) {
             spriteMaterial = new THREE.SpriteMaterial( 
-                { map: particleTexture, useScreenCoordinates: false, color: 0xffffff } );
+                { map: particleTexture, useScreenCoordinates: false, 
+                    color: 0xffffff } );
             
             sprite = new THREE.Sprite( spriteMaterial );
             
@@ -358,7 +385,9 @@ class AudioCloud extends AbstractApplication{
             // sprite.position.setLength( radiusRange * Math.random() );
             
             // for a spherical shell:
-            sprite.position.setLength( radiusRange * (Math.random() * 0.1 + 0.9) );
+            shellRadio = radiusRange * (Math.random() * 0.1 + 0.9); 
+            sprite.position.setLength(shellRadio);
+            sprite.shellRadio = shellRadio;
             
             // sprite.color.setRGB( Math.random(),  Math.random(),  Math.random() ); 
             sprite.material.color.setHSL( Math.random(), 0.9, 0.7 ); 
@@ -371,6 +400,7 @@ class AudioCloud extends AbstractApplication{
             this.particleAttributes.startPosition.push( sprite.position.clone() );
             this.particleAttributes.randomness.push( Math.random() );
         }
+
         particleGroup.position.y = 50;
         
         return particleGroup;
@@ -378,12 +408,14 @@ class AudioCloud extends AbstractApplication{
         //this._scene.add( this.particleGroup );
     }
 
-    updateInnerShinnyParticle(particleGroup) {
+    updateInnerShinnyParticle(particleGroup, color, bandsArray) {
     	let time = 4 * this.clock.getElapsedTime();
 	    let sprite = null;
         let randomness = null;
         let pulseFactor = null;
 
+        let delta = null;
+        let shellRadio = null;
         for ( let c = 0; c < particleGroup.children.length; c++ ) 
         {
             sprite = particleGroup.children[ c ];
@@ -399,21 +431,35 @@ class AudioCloud extends AbstractApplication{
             randomness = this.particleAttributes.randomness[c] + 1;
             
             pulseFactor = Math.sin(randomness * time) * 0.1 + 0.9;
-            sprite.material.color.setHSL(0.5,1,0.4);
+
+
+
+            sprite.material.color.setHSL(color[0] / 360, color[1] / 100, 
+                                         color[2] / 100);
+
             sprite.position.x = this.particleAttributes.startPosition[c].x * 
                 pulseFactor;
             sprite.position.y = this.particleAttributes.startPosition[c].y * 
                 pulseFactor;
             sprite.position.z = this.particleAttributes.startPosition[c].z * 
-                pulseFactor;	
+                pulseFactor;
+            
+            // Activate sphere rotations with bandsArray
+            //
+            // shellRadio = sprite.shellRadio + bandsArray[c % 18] * 5;
+            //
+            // delta = sprite.shellRadio + (shellRadio - sprite.shellRadio) * 0.5;
+            // sprite.position.setLength(delta);
+
         }
-        particleGroup.rotation.y = time * 0.75;
+        particleGroup.rotation.y = time * 0.5;
         // rotate the entire group
         // particleGroup.rotation.x = time * 0.5;
         // particleGroup.rotation.z = time * 1.0;
     }
 
-    updateAllShinnyParticles() {
+    updateAllShinnyParticles(color, distance, bandsArray, shouldChange) {
+        
         let t0 = this.clock.getElapsedTime();
         let timeOffset = null;
 
@@ -422,13 +468,23 @@ class AudioCloud extends AbstractApplication{
         let position = null;
         let shinnyParticle = null
 
+
+        let value;
+        
+        if (shouldChange) {
+            this.visualIndex++;
+        }
+
+        value = this.shinnyParticleGroupShapes[this.visualIndex % 
+            this.shinnyParticleGroupShapes.length]
+
         for( let i = 0; i < this.params.numShinnyParticles; i++) {
             shinnyParticle = this.arrShinny[i];
 
-            this.updateInnerShinnyParticle(shinnyParticle);       
+            this.updateInnerShinnyParticle(shinnyParticle, color, bandsArray);
             timeOffset = time + shinnyParticle.offset;
 
-            position = this.position(timeOffset);
+            position = this.position(timeOffset, distance + 1, value);
 
             shinnyParticle.position.setX(position.x);
             shinnyParticle.position.setY(position.y);           
@@ -622,37 +678,17 @@ class AudioCloud extends AbstractApplication{
 
     restartEngine(parameters) {
         // resetCamera();
+     
+        if (this.starTunnelEngine) {
+            this.starTunnelEngine.destroy();
+            this.starTunnelEngine = new ParticleEngine(this._scene);
+            this.starTu.setValues( parameters );
+            this.engine.initialize();
+        }
+
         
-        this.engine.destroy();
-        this.engine = new ParticleEngine(this._scene);
-        this.engine.setValues( parameters );
-        this.engine.initialize();
+
     }
-
-    initPostprocessing() {
-        this._renderer.autoClearColor = true;
-        this.composer = new WAGNER.Composer(this._renderer);
-        this.fxaaPass = new FXAAPass();
-        this.boxBlurPass = new BoxBlurPass(3, 3);
-        this.bloomPass = new MultiPassBloomPass({
-            blurAmount: 2,
-            applyZoomBlur: true
-        });
-    }
-
-    initGestures() {
-
-        let TRANSLATION_SPEED = 300;
-
-        return window.addEventListener('usertrack', function(e) {
-            this.camX = (e.detail.x * TRANSLATION_SPEED);
-            this.camZ = (e.detail.z * TRANSLATION_SPEED) * -1;
-            return this.camY = (e.detail.y * TRANSLATION_SPEED);
-        }.bind(this), false);
-    }
-
-
-
     startAnimation() {
         return requestAnimationFrame(this.animate.bind(this));
     }
@@ -764,12 +800,31 @@ class AudioCloud extends AbstractApplication{
         let OSCdistance = this.OSCHandler.getDistance();
         let bandsArray = this.OSCHandler.getBandviz();
         let color = this.OSCHandler.getColor();
+        let brightness = this.OSCHandler.getBrightness();
         let new_size = 0;
-        
-        // if (OSCscale) {
-        //     this.params.radius = OSCscale;
-        // }
+        let hand_l = this.OSCHandler.getHandL();
 
+        let rightFoot = this.OSCHandler.getSwitch();
+        let shouldChange = false;
+
+        if ((rightFoot.y > -0.55) && (this.frameCount == 0)) {
+            shouldChange = true;
+            this.activateFrameCount = true;
+        }
+        else {
+            shouldChange = false;
+        }
+
+        if (this.activateFrameCount) {
+            this.frameCount++;
+        }
+        
+        if (this.frameCount >= 20) {
+            this.frameCount = 0;
+            this.activateFrameCount = false;
+        }
+        console.log(this.frameCount);
+        
         if (OSCdistance) {
             this.params.distance = OSCdistance;
         }
@@ -782,7 +837,33 @@ class AudioCloud extends AbstractApplication{
         
         // this.updateShinnyParticles();
         // this.updateShinnyParticlesPath();
-        this.updateAllShinnyParticles();
+        if (this.visual1) {
+            this.updateAllShinnyParticles(color.values.hsl, OSCdistance, bandsArray,
+                                         shouldChange);
+            
+            if (this.fireflies) {
+                this.firefliesEngine.update(dt * 0.5, brightness, bandsArray);
+            }
+        }
+
+        // this.rotateCamera(this.cameraPosX, this.cameraPosY);
+
+        // dx = this.mousePt.x - this.camXinit;
+        // dy = this.mousePt.y - this.camYinit;
+        // dist = Math.sqrt(dx * dx + dy * dy);
+        // angle = Math.atan2(dy, dx);
+        // r = 0.5 * this.params.distance + 30; // Represents distance from camera to object
+        // xpos = this.camXinit - Math.cos(angle) * r;
+        // ypos = this.camYinit - Math.sin(angle) * r;
+        // this._camera.position.setX(2 * Math.PI * xpos / this.windowW * 30);
+        // this._camera.position.setY(2 * Math.PI * xpos / this.windowW * 30);
+        
+         
+        // this._camera.position.setX(this._camera.position.x + 
+        //                            (xpos - this._camera.position.x) * 0.5);
+        // this._camera.position.setY(this._camera.position.y + 
+        //                            (ypos - this._camera.position.y) * 0.5);
+        //
 
 
         for (i = _i = 0, _ref = this.params.numParticles - 1; 
@@ -825,9 +906,7 @@ class AudioCloud extends AbstractApplication{
         }
 
 
-        // if (this.fireflies) {
-        //     this.firefliesEngine.update(dt * 0.5, color.values.hsl, bandsArray);
-        // }
+        
         // if (this.starTunnel) {
         //     this.starTunnelEngine.update( dt * 0.5, color.values.hsl, bandsArray);   
         // }

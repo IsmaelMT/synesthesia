@@ -37,6 +37,47 @@ class AbstractApplication{
         window.addEventListener( 'resize', this.onWindowResize.bind(this), false );
     }
 
+    rotateCamera(cx, cy){
+        let dx;
+        let dy;
+
+        console.log(cx);
+        console.log(cy);
+
+        this._camera.position.setX(this._camera.position.x + 
+                                   ( cx - this._camera.position.x ) * 0.03);
+
+        // this._camera.position.setY(this._camera.position.y + 
+        //                            ( -cy - this._camera.position.y ) * 0.03);
+        
+        console.log(this._camera.position);
+        //
+        // dx = this.mousePt.x - circle.xInit;
+        // dy = this.mousePt.y - circle.yInit;
+        // dist = Math.sqrt(dx * dx + dy * dy);
+        // angle = Math.an2(dy, dx);
+        // r = circle.camRad * this.params.distance + 30;
+        // xpos = circle.xInit - Math.cos(angle) * r;
+        // ypos = circle.yInit - Math.sin(angle) * r;
+        // circle.position.setX(circle.position.x + (xpos - circle.position.x) * 0.2);
+        // circle.position.setY(circle.position.y + (ypos - circle.position.y) * 0.2);
+        //
+
+
+
+        this._camera.lookAt( this._scene.position );
+
+
+        // this._camera.position.x = Math.sin(.5 * Math.PI * (cx - .5)) * 1000;
+        // this._camera.position.y = Math.sin(.25 * Math.PI * (cy - .5)) * 1000;
+        // this._camera.position.z = Math.cos(.5 * Math.PI * (cx - .5)) * 1000;
+        //
+        // this._camera.lookAt(this._scene.position);
+
+    } 
+
+
+
     get renderer(){
         return this._renderer;
     }

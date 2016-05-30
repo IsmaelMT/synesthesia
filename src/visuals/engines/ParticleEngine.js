@@ -1,3 +1,4 @@
+import Color from "color"
 import THREE from "three"
 import Tween from "./Tween"
 import Particle from "./Particle"
@@ -152,7 +153,8 @@ class ParticleEngine {
             fragmentShader: particleFragmentShader,
             transparent: true, // alphaTest: 0.5,  
             // if having transparency issues, try including: alphaTest: 0.5, 
-            blending: THREE.NormalBlending, depthTest: true,
+            blending: THREE.NormalBlending, 
+            depthTest: false,
             
         });
         this.particleMesh = new THREE.Mesh();
@@ -199,9 +201,11 @@ class ParticleEngine {
             },
             vertexShader:   particleVertexShader,
             fragmentShader: particleFragmentShader,
-            transparent: true,  alphaTest: 0.5, // if having transparency issues, 
+            transparent: true,  
+            alphaTest: 0.5, // if having transparency issues, 
                                                 // try including: alphaTest: 0.5, 
-            blending: THREE.NormalBlending, depthTest: true
+            blending: THREE.NormalBlending, 
+            depthTest: false
         });
         this.particleMesh = new THREE.Points();
     }
@@ -331,11 +335,9 @@ class ParticleEngine {
         // this.scene.add( this.particleMesh );
     }
 
-    update(dt, color, bandsArray) {
+    update(dt, brightness, bandsArray) {
         let recycleIndices = [];
         
-        
-        //
         // this.particleGeometry.attributes.position.needsUpdate = true;
         // this.particleGeometry.attributes.customVisible.needsUpdate = true;
         // this.particleGeometry.attributes.customAngle.needsUpdate = true;
@@ -344,6 +346,7 @@ class ParticleEngine {
         // this.particleGeometry.attributes.customOpacity.needsUpdate = true;
         //
         // update particle data
+        let color;
         for (let i = 0, j = 0; i < this.particleCount; i++, j+=3) {
             if (this.particleArray[i].alive ) {
                 this.particleArray[i].update(dt);
@@ -362,16 +365,17 @@ class ParticleEngine {
                 this.visibles[i] = this.particleArray[i].alive;
  
                 // Use pitch colors
-                this.colors[j] = color[0] / 360;
-                this.colors[j + 1] = color[1] / 100;
-                this.colors[j + 2] = color[2] / 100;
-               
-                // this.colors[j] = this.particleArray[i].color.r;
-                // this.colors[j + 1] = this.particleArray[i].color.g;
-                // this.colors[j + 2] = this.particleArray[i].color.b;
+                // this.colors[j] = color[0] / 360;
+                // this.colors[j + 1] = color[1] / 100;
+                // this.colors[j + 2] = color[2] / 100;
+
+                this.colors[j] = this.particleArray[i].color.r;
+                this.colors[j + 1] = this.particleArray[i].color.g;
+                this.colors[j + 2] = this.particleArray[i].color.b;
                 
-                this.opacities[i] = this.particleArray[i].opacity;
-                this.sizes[i] = this.particleArray[i].size *  bandsArray[i % 18] / 10;
+                // Opacity is controlled by the array of bands
+                this.opacities[i] = this.particleArray[i].opacity * bandsArray[i % 18];
+                this.sizes[i] = this.particleArray[i].size;
                 this.angles[i] = this.particleArray[i].angle;
 
             }		
