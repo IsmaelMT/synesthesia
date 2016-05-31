@@ -279,32 +279,6 @@ class AudioCloud extends AbstractApplication{
             this.params.scale * 20.0 * Math.sin(value * t) * (3.0 + Math.cos(3.0 * t)),
             this.params.scale * 50.0 * Math.sin(3.0 * t) );
     }
-    //
-    // updateShinnyParticlesPath () {
-    //     let t0 = this.clock.getElapsedTime();
-    //     let timeOffset = null;
-    //
-    //     this.pathShaderMaterial.uniforms.time.value = 0.125 * t0;
-    //
-    //     let vertices = this.pathParticleGeometry.attributes.position.array;
-    //     let position;
-    //
-    //     for( let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3) {
-    //
-    //         timeOffset = this.pathShaderMaterial.uniforms.time.value + 
-    //             this.pathParticleGeometry.attributes.customOffset.array[v];
-    //
-    //         position = this.position(timeOffset);
-    //
-    //         vertices[i] = position.x;	
-    //         vertices[i + 1] = position.y
-    //         vertices[i + 2] = position.z;
-    //     }
-    //
-    //     this.pathParticleGeometry.addAttribute("position",
-    //         new THREE.BufferAttribute(vertices, 3));
-    //
-    // }
 
 
     buildShinnyParticlesGroup() {
@@ -448,7 +422,7 @@ class AudioCloud extends AbstractApplication{
             this.updateInnerShinnyParticle(shinnyParticle, color, bandsArray);
             timeOffset = time + shinnyParticle.offset;
 
-            position = this.position(timeOffset, distance + 1, value);
+            position = this.position(timeOffset, distance + 0.3, value);
 
             shinnyParticle.position.setX(position.x);
             shinnyParticle.position.setY(position.y);           

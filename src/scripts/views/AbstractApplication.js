@@ -44,8 +44,8 @@ class AbstractApplication{
         console.log(cx);
         console.log(cy);
 
-        this._camera.position.setX(this._camera.position.x + 
-                                   ( cx - this._camera.position.x ) * 0.03);
+        // this._camera.position.setX(this._camera.position.x + 
+        //                            ( cx - this._camera.position.x ) * 0.03);
 
         // this._camera.position.setY(this._camera.position.y + 
         //                            ( -cy - this._camera.position.y ) * 0.03);

@@ -379,10 +379,10 @@ class ParticleEngine {
                 }
 
                 // Opacity is controlled by the array of bands
-                this.opacities[i] = this.particleArray[i].opacity * bandsArray[i % 18] + 1;
+                this.opacities[i] = this.particleArray[i].opacity * bandsArray[i % 18];
 
                 if (amplitude !== undefined) { 
-                    this.sizes[i] = this.particleArray[i].size * amplitude + 1;
+                    this.sizes[i] = this.particleArray[i].size * amplitude;
                 } 
                 else {
                     this.sizes[i] = this.particleArray[i].size;
