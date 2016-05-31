@@ -136,18 +136,25 @@ class AudioCloud extends AbstractApplication{
         this.clock = new THREE.Clock();
         
         this.engine = new ParticleEngine(this._scene);
-
-        this.starTunnelEngine = new ParticleEngine(this._scene);
-        
-        this.firefliesEngine = new ParticleEngine(this._scene);
-
+ 
         this.visual1 = false;
-        
+     
+        this.visual2 = false;
+
         this.visualIndex = 0;
 
         this.frameCount = 0;
 
         this.activateFrameCount = false;
+
+
+        this.vizFrameCount = 0;
+        
+        this.changeViz = false
+
+        this.activateVizframeCount = false;
+
+        this.vizIndex = 0;
     }
 
     init() {
@@ -155,6 +162,8 @@ class AudioCloud extends AbstractApplication{
         this.initGestures();
         this.initPostprocessing();
         this.resize();
+
+        this.vizArray = [this.buildVisual1.bind(this), this.buildVisual2.bind(this)];
         // this.buildFireflies();
         // this.buildStarTunnel();
         // this.buildStars();
@@ -162,7 +171,7 @@ class AudioCloud extends AbstractApplication{
         // this.buildFlares();
         // this.buildShinnyParticlesPath();
         // this.buildShinnyParticlesGroup();
-        this.buildVisual1();
+        this.buildVisual2();
         this.resize();
         this.mousePt.setX(0);
         this.mousePt.setY(0);
@@ -217,89 +226,46 @@ class AudioCloud extends AbstractApplication{
     }
 
     buildVisual1() {
+        if (this.visual2) {
+            this.destroyVisual2();
+        }
+
+        this.arrShinny = [];
+        this.firefliesEngine = new ParticleEngine(this._scene);
         this.visual1 = true;
         this.buildFireflies();
         this.buildShinnyParticlesGroup();
     }
 
     destroyVisual1() {
+        this.visual1 = false;
         this.firefliesEngine.destroy();
+        this.destroyShinnyParticleGroup();
+
     }
 
+    destroyShinnyParticleGroup() {
+        for (let i = 0; i < this.arrShinny.length; i++) {
+            this._scene.remove(this.arrShinny[i]);
+            delete this.arrShinny[i];
+        }
+    }
 
     buildVisual2() {
-        this.visual1 = true;
-        this.buildFireflies();
-        this.buildShinnyParticlesGroup();
+        if (this.visual1) {
+            this.destroyVisual1();
+        }
+
+        this.starTunnelEngine = new ParticleEngine(this._scene);
+        this.visual2 = true;
+        this.buildStarTunnel();
     }
 
+    destroyVisual2() {
+        this.visual2 = false;
+        this.starTunnelEngine.destroy();
+    }
 
-    // buildShinnyParticlesPath() {
-    //
-    //     this.pathParticleGeometry = new THREE.BufferGeometry();
-    //     // for (let i = 0; i < 100; i++)
-    //     //     this.particleGeometry.vertices.push( new THREE.Vector3(0,0,0) );
-    //
-    //     let discTexture = new THREE.TextureLoader().load( 'images/spark.png' );
-    //
-    //     // properties that may vary from particle to particle. 
-    //     // these values can only be accessed in vertex shaders! 
-    //     //  (pass info to fragment shader via vColor.)
-    //
-    //     this.pathParticleCount = 100;
-    //     let colors = new Float32Array(this.pathParticleCount * 3);
-    //     let offsets = new Float32Array(this.pathParticleCount);
-    //     let positions = new Float32Array(this.pathParticleCount * 3);
-    //
-    //     for(let v = 0, i = 0; v < this.pathParticleCount; v++, i+=3 ) {
-    //         
-    //         colors[i] = 1 - v / this.pathParticleCount;
-    //         colors[i + 1] = 1.0;
-    //         colors[i + 2] = 0.5;
-    //
-    //         positions[i] = 0.0;
-    //         positions[i + 1] = 0.0;
-    //         positions[i + 2] = 0.0;
-    //         offsets[v] = 6.282 * (v / this.pathParticleCount); 
-    //         // not really used in shaders, move elsewhere
-    //     }
-    //     
-    //     this.pathParticleGeometry.addAttribute("customColor",
-    //         new THREE.BufferAttribute(colors, 3));
-    //
-    //     this.pathParticleGeometry.addAttribute("position",
-    //         new THREE.BufferAttribute(positions, 3));
-    //
-    //     this.pathParticleGeometry.addAttribute("customOffset", 
-    //         new THREE.BufferAttribute(offsets, 1));
-    //
-    //     // values that are constant for all particles during a draw call
-    //     let uniforms = {
-    //         time:      { type: "f", value: 1.0 },
-    //         texture:   { type: "t", value: discTexture },
-    //     };
-    //
-    //     this.pathShaderMaterial = new THREE.ShaderMaterial( {
-    //         uniforms: 		uniforms,
-    //         vertexShader:   vertexShader,
-    //         fragmentShader: fragmentShader,
-    //         transparent: true
-    //     });
-    //
-    //     let particleCube = new THREE.Points( this.pathParticleGeometry, 
-    //                                          this.pathShaderMaterial );
-    //     
-    //     particleCube.position.set(0, 85, 0);
-    //     particleCube.dynamic = true;
-    //     // in order for transparency to work correctly, we need sortParticles = true.
-    //     //  but this won't work if we calculate positions in vertex shader,
-    //     //  so positions need to be calculated in the update function,
-    //     //  and set in the geometry.vertices array
-    //     particleCube.sortParticles = true;
-    //     this._scene.add( particleCube );
-    // }
-    //
-    //
     position(t, distance, value) {
         // x(t) = cos(2t)�(3+cos(3t))
         // y(t) = sin(2t)�(3+cos(3t))
@@ -308,8 +274,6 @@ class AudioCloud extends AbstractApplication{
         // This is the speed of updating the distance element each iteration
         
         this.params.scale = this.params.scale + (distance - this.params.scale) * 0.6;
-      
-        console.log(value);
         return new THREE.Vector3(
             this.params.scale * 20.0 * Math.cos(value * t) * (3.0 + Math.cos(3.0 * t)),
             this.params.scale * 20.0 * Math.sin(value * t) * (3.0 + Math.cos(3.0 * t)),
@@ -682,7 +646,7 @@ class AudioCloud extends AbstractApplication{
         if (this.starTunnelEngine) {
             this.starTunnelEngine.destroy();
             this.starTunnelEngine = new ParticleEngine(this._scene);
-            this.starTu.setValues( parameters );
+            this.starTunnelEngine.setValues( parameters );
             this.engine.initialize();
         }
 
@@ -802,11 +766,15 @@ class AudioCloud extends AbstractApplication{
         let color = this.OSCHandler.getColor();
         let brightness = this.OSCHandler.getBrightness();
         let new_size = 0;
-        let hand_l = this.OSCHandler.getHandL();
 
         let rightFoot = this.OSCHandler.getSwitch();
+        let rightHand = this.OSCHandler.getChangeViz();
+        let camera = this.OSCHandler.getCameraPosition();
+        
         let shouldChange = false;
+        let vizShouldChange = false;
 
+        // Activate the visual change for visual1
         if ((rightFoot.y > -0.55) && (this.frameCount == 0)) {
             shouldChange = true;
             this.activateFrameCount = true;
@@ -814,17 +782,44 @@ class AudioCloud extends AbstractApplication{
         else {
             shouldChange = false;
         }
-
+    
+        // Frame count is activated so the gesture doesn't 
+        // execute many times
         if (this.activateFrameCount) {
             this.frameCount++;
         }
         
+        // After 20 frames you can make the gesture again
         if (this.frameCount >= 20) {
             this.frameCount = 0;
             this.activateFrameCount = false;
         }
-        console.log(this.frameCount);
         
+
+        if ((rightHand.y > camera.y) && (this.vizFrameCount == 0)) {
+            vizShouldChange = true;
+            this.activateVizframeCount = true
+        }
+        else {
+            vizShouldChange = false
+        }
+
+        if (this.activateVizframeCount) {
+            this.vizFrameCount++
+        }
+
+        if (this.vizFrameCount >= 80) {
+            this.vizFrameCount = 0;
+            this.activateVizframeCount = false;
+        }
+
+        if (vizShouldChange) {
+            console.log("change viz");
+            this.vizArray[this.vizIndex++ % 2]();
+        }
+
+
+        // Change distance parameter (Amplitude)
         if (OSCdistance) {
             this.params.distance = OSCdistance;
         }
@@ -835,8 +830,8 @@ class AudioCloud extends AbstractApplication{
             this.mousePt.setZ(this.mousePt.z + (this.camZ - this.mousePt.z) * 0.03);
         }
         
-        // this.updateShinnyParticles();
-        // this.updateShinnyParticlesPath();
+
+        // Visual 1 is activated
         if (this.visual1) {
             this.updateAllShinnyParticles(color.values.hsl, OSCdistance, bandsArray,
                                          shouldChange);
@@ -846,24 +841,14 @@ class AudioCloud extends AbstractApplication{
             }
         }
 
-        // this.rotateCamera(this.cameraPosX, this.cameraPosY);
-
-        // dx = this.mousePt.x - this.camXinit;
-        // dy = this.mousePt.y - this.camYinit;
-        // dist = Math.sqrt(dx * dx + dy * dy);
-        // angle = Math.atan2(dy, dx);
-        // r = 0.5 * this.params.distance + 30; // Represents distance from camera to object
-        // xpos = this.camXinit - Math.cos(angle) * r;
-        // ypos = this.camYinit - Math.sin(angle) * r;
-        // this._camera.position.setX(2 * Math.PI * xpos / this.windowW * 30);
-        // this._camera.position.setY(2 * Math.PI * xpos / this.windowW * 30);
+        // Visual 2 is activated
+        if (this.visual2) {
+            if (this.starTunnel) {
+                this.starTunnelEngine.update(dt * 0.5, brightness, bandsArray, 
+                                             color.values.hsl, OSCdistance);
+            }
         
-         
-        // this._camera.position.setX(this._camera.position.x + 
-        //                            (xpos - this._camera.position.x) * 0.5);
-        // this._camera.position.setY(this._camera.position.y + 
-        //                            (ypos - this._camera.position.y) * 0.5);
-        //
+        }
 
 
         for (i = _i = 0, _ref = this.params.numParticles - 1; 

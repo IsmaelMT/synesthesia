@@ -335,18 +335,19 @@ class ParticleEngine {
         // this.scene.add( this.particleMesh );
     }
 
-    update(dt, brightness, bandsArray) {
+    update(dt, brightness, bandsArray, color, amplitude) {
         let recycleIndices = [];
         
-        // this.particleGeometry.attributes.position.needsUpdate = true;
-        // this.particleGeometry.attributes.customVisible.needsUpdate = true;
-        // this.particleGeometry.attributes.customAngle.needsUpdate = true;
-        // this.particleGeometry.attributes.customSize.needsUpdate = true;
-        // this.particleGeometry.attributes.customColor.needsUpdate = true;
-        // this.particleGeometry.attributes.customOpacity.needsUpdate = true;
-        //
+        this.particleGeometry.attributes.position.needsUpdate = true;
+        this.particleGeometry.attributes.customVisible.needsUpdate = true;
+        this.particleGeometry.attributes.customAngle.needsUpdate = true;
+        this.particleGeometry.attributes.customSize.needsUpdate = true;
+        this.particleGeometry.attributes.customColor.needsUpdate = true;
+        this.particleGeometry.attributes.customOpacity.needsUpdate = true;
+
+        console.log(color);
+
         // update particle data
-        let color;
         for (let i = 0, j = 0; i < this.particleCount; i++, j+=3) {
             if (this.particleArray[i].alive ) {
                 this.particleArray[i].update(dt);
@@ -365,17 +366,27 @@ class ParticleEngine {
                 this.visibles[i] = this.particleArray[i].alive;
  
                 // Use pitch colors
-                // this.colors[j] = color[0] / 360;
-                // this.colors[j + 1] = color[1] / 100;
-                // this.colors[j + 2] = color[2] / 100;
-
-                this.colors[j] = this.particleArray[i].color.r;
-                this.colors[j + 1] = this.particleArray[i].color.g;
-                this.colors[j + 2] = this.particleArray[i].color.b;
                 
+                if (color !== undefined) {
+                    this.colors[j] = color[0] / 360;
+                    this.colors[j + 1] = color[1] / 100;
+                    this.colors[j + 2] = color[2] / 100;
+                } 
+                else {
+                    this.colors[j] = this.particleArray[i].color.r;
+                    this.colors[j + 1] = this.particleArray[i].color.g;
+                    this.colors[j + 2] = this.particleArray[i].color.b;
+                }
+
                 // Opacity is controlled by the array of bands
-                this.opacities[i] = this.particleArray[i].opacity * bandsArray[i % 18];
-                this.sizes[i] = this.particleArray[i].size;
+                this.opacities[i] = this.particleArray[i].opacity * bandsArray[i % 18] + 1;
+
+                if (amplitude !== undefined) { 
+                    this.sizes[i] = this.particleArray[i].size * amplitude + 1;
+                } 
+                else {
+                    this.sizes[i] = this.particleArray[i].size;
+                }
                 this.angles[i] = this.particleArray[i].angle;
 
             }		
