@@ -335,7 +335,7 @@ class ParticleEngine {
         // this.scene.add( this.particleMesh );
     }
 
-    update(dt, brightness, bandsArray, color, amplitude) {
+    update(dt, brightness, bandsArray, color, amplitude, camera, stars) {
         let recycleIndices = [];
         
         this.particleGeometry.attributes.position.needsUpdate = true;
@@ -344,8 +344,6 @@ class ParticleEngine {
         this.particleGeometry.attributes.customSize.needsUpdate = true;
         this.particleGeometry.attributes.customColor.needsUpdate = true;
         this.particleGeometry.attributes.customOpacity.needsUpdate = true;
-
-        console.log(color);
 
         // update particle data
         for (let i = 0, j = 0; i < this.particleCount; i++, j+=3) {
@@ -359,10 +357,18 @@ class ParticleEngine {
                     recycleIndices.push(i);
                 }
      
-                this.positions[j] = this.particleArray[i].position.x;
-                this.positions[j + 1] = this.particleArray[i].position.y;
-                this.positions[j + 2] = this.particleArray[i].position.z;
+                if (stars != undefined) {
 
+                    this.positions[j] = this.particleArray[i].position.x + camera.x * 25;
+                    this.positions[j + 1] = this.particleArray[i].position.y ;
+                    this.positions[j + 2] = this.particleArray[i].position.z + camera.z * 25;
+                }
+                else {
+                    this.positions[j] = this.particleArray[i].position.x;
+                    this.positions[j + 1] = this.particleArray[i].position.y;
+                    this.positions[j + 2] = this.particleArray[i].position.z;
+
+                }
                 this.visibles[i] = this.particleArray[i].alive;
  
                 // Use pitch colors

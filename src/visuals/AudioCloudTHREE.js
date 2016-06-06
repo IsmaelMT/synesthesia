@@ -91,7 +91,16 @@ class AudioCloud extends AbstractApplication{
             useFXAA: true,
             useBlur: false,
             useBloom: true,
-            brightness: 1.0
+            brightness: 1.0,
+            width: 20.0,
+            height: 20.0,
+            depth: 50.0,
+            p1: 3.0,
+            p2: 3.0,
+            c1: 3.0,
+            c2: 3.0,
+            c3: 3.0
+
         }
 
         this.shinnyParticleGroupShapes = [2.0, 3.0, 7.0, 10.0, 20.0];
@@ -176,7 +185,7 @@ class AudioCloud extends AbstractApplication{
         // this.buildFlares();
         // this.buildShinnyParticlesPath();
         // this.buildShinnyParticlesGroup();
-        this.buildVisual1();
+        this.buildVisual2();
         this.resize();
         this.mousePt.setX(0);
         this.mousePt.setY(0);
@@ -295,10 +304,15 @@ class AudioCloud extends AbstractApplication{
         // This is the speed of updating the distance element each iteration
         
         this.params.scale = this.params.scale + (distance - this.params.scale) * 0.6;
+        
         return new THREE.Vector3(
-            this.params.scale * 20.0 * Math.cos(value * t) * (3.0 + Math.cos(3.0 * t)),
-            this.params.scale * 20.0 * Math.sin(value * t) * (3.0 + Math.cos(3.0 * t)),
-            this.params.scale * 50.0 * Math.sin(3.0 * t) );
+            this.params.scale * this.params.width * 
+                Math.cos(value * t) * (this.params.p1 + Math.cos(this.params.c1 * t)),
+            
+            this.params.scale * this.params.height * 
+                Math.sin(value * t) * (this.params.p2 + Math.cos(this.params.c2 * t)),
+            
+            this.params.scale * this.params.depth * Math.sin(this.params.c3 * t) );
     }
 
     buildLight() {
@@ -477,6 +491,7 @@ class AudioCloud extends AbstractApplication{
     }
 
 
+
     buildStars() {
         
         let starQty = 10000;
@@ -639,6 +654,18 @@ class AudioCloud extends AbstractApplication{
         
         this.gui.add(this.params, 'radius', 1, 10);
         this.gui.add(this.params, 'distance', 100, 1000).listen();
+        this.gui.add(this.params, 'width', 0, 100).listen();
+        this.gui.add(this.params, 'height', 0, 100).listen();
+        this.gui.add(this.params, 'depth', 0, 1000).listen();
+        
+        this.gui.add(this.params, 'c1', 0, 100).listen();
+        this.gui.add(this.params, 'c2', 0, 100).listen();
+        this.gui.add(this.params, 'c3', 0, 100).listen();
+        
+        this.gui.add(this.params, 'p1', 0, 100).listen();
+        this.gui.add(this.params, 'p2', 0, 100).listen();
+
+        
         sizeController = this.gui.add(this.params, 'size', 0, 1);
         
         this.gui.add(this.params, 'usePostProcessing');
@@ -814,6 +841,7 @@ class AudioCloud extends AbstractApplication{
         let shouldChange = false;
         let vizShouldChange = false;
 
+
         // Activate the visual change for visual1
         if (leftHand) {
             if ((leftHand.y > camera.y) && (this.frameCount == 0)) {
@@ -902,7 +930,7 @@ class AudioCloud extends AbstractApplication{
         if (this.visual2) {
             if (this.starTunnel) {
                 this.starTunnelEngine.update(dt * 0.5, brightness, bandsArray, 
-                                             color.values.hsl, OSCdistance);
+                                             color.values.hsl, OSCdistance, camera);
             }
         
         }
