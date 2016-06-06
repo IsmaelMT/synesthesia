@@ -10,36 +10,41 @@ import THREE from "three"
 import Utils from "../utils/Utils"
 import WAGNER from '@superguigui/wagner/'
 import ZoomBlurPassfrom from '@superguigui/wagner/src/passes/zoom-blur/ZoomBlurPass'
+import "../shaders/BrightnessShader"
+import "../shaders/ShaderPass"
+import "../scripts/EffectComposer"
+import "../shaders/CopyShader"
+import "../scripts/RenderPass"
+import "../scripts/MaskPass" 
 
-
-let vertexShader = 
-    ["uniform float time;",
-     "attribute vec3 customColor;",
-     "varying vec3 vColor;",
-     "void main()",
-     "{",
-	 "vColor = customColor;", 
-     // set color associated to vertex; use later in fragment shader.",
-     "vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
-     // option (1): draw particles at constant size on screen
-	 // gl_PointSize = size;
-     // option (2): scale particles as objects in 3D space"
-	 "gl_PointSize = 40.0 * ( 300.0 / length( mvPosition.xyz ) );",
-	 "gl_Position = projectionMatrix * mvPosition;",
-     "}"
-].join("\n");
-
-let fragmentShader = [
-     "uniform sampler2D texture;",
-     "varying vec3 vColor;", // colors associated to vertices, assigned by vertex shader
-     "void main()",
-     "{",
-	    // calculates a color for the particle
-	    "gl_FragColor = vec4( vColor, 1.0 );",
-	    // sets a white particle texture to desired color
-	    "gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );",
-     "}"
-].join("\n");
+// let vertexShader = 
+//     ["uniform float time;",
+//      "attribute vec3 customColor;",
+//      "varying vec3 vColor;",
+//      "void main()",
+//      "{",
+// 	 "vColor = customColor;", 
+//      // set color associated to vertex; use later in fragment shader.",
+//      "vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
+//      // option (1): draw particles at constant size on screen
+// 	 // gl_PointSize = size;
+//      // option (2): scale particles as objects in 3D space"
+// 	 "gl_PointSize = 40.0 * ( 300.0 / length( mvPosition.xyz ) );",
+// 	 "gl_Position = projectionMatrix * mvPosition;",
+//      "}"
+// ].join("\n");
+//
+// let fragmentShader = [
+//      "uniform sampler2D texture;",
+//      "varying vec3 vColor;", // colors associated to vertices, assigned by vertex shader
+//      "void main()",
+//      "{",
+// 	    // calculates a color for the particle
+// 	    "gl_FragColor = vec4( vColor, 1.0 );",
+// 	    // sets a white particle texture to desired color
+// 	    "gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );",
+//      "}"
+// ].join("\n");
 
 
 class AudioCloud extends AbstractApplication{
@@ -85,11 +90,11 @@ class AudioCloud extends AbstractApplication{
             usePostProcessing: true,
             useFXAA: true,
             useBlur: false,
-            useBloom: true
+            useBloom: true,
+            brightness: 1.0
+        }
 
-        };
-
-        this.shinnyParticleGroupShapes = [2.0, 3.0, 7.0, 10.0, 20.0]
+        this.shinnyParticleGroupShapes = [2.0, 3.0, 7.0, 10.0, 20.0];
 
         this.particleParameters = {
             fountain:   () => { this.restartEngine( Examples.fountain   ); },
@@ -171,7 +176,7 @@ class AudioCloud extends AbstractApplication{
         // this.buildFlares();
         // this.buildShinnyParticlesPath();
         // this.buildShinnyParticlesGroup();
-        this.buildVisual2();
+        this.buildVisual1();
         this.resize();
         this.mousePt.setX(0);
         this.mousePt.setY(0);
@@ -184,14 +189,29 @@ class AudioCloud extends AbstractApplication{
 
 
     initPostprocessing() {
-        this._renderer.autoClearColor = true;
-        this.composer = new WAGNER.Composer(this._renderer);
-        this.fxaaPass = new FXAAPass();
-        this.boxBlurPass = new BoxBlurPass(3, 3);
-        this.bloomPass = new MultiPassBloomPass({
-            blurAmount: 2,
-            applyZoomBlur: true
-        });
+        // this._renderer.autoClearColor = true;
+        // this.composer = new WAGNER.Composer(this._renderer);
+        // this.fxaaPass = new FXAAPass();
+        // this.boxBlurPass = new BoxBlurPass(3, 3);
+        // this.bloomPass = new MultiPassBloomPass({
+        //     blurAmount: 2,
+        //     applyZoomBlur: true
+        // });
+        //
+        //POST PROCESSING
+        //Create Effects Composer
+        this.composer = new THREE.EffectComposer( this._renderer);
+        
+        //Create Shader Passes
+        this.renderPass = new THREE.RenderPass( this._scene, this._camera );
+        this.testPass = new THREE.ShaderPass( THREE.BrightnessShader );
+        
+        //Add Shader Passes to Composer - order is important
+        this.composer.addPass( this.renderPass );
+        this.composer.addPass( this.testPass );
+
+        //set last pass in composer chain to renderToScreen
+        this.testPass.renderToScreen = true;
     }
 
     initGestures() {
@@ -235,6 +255,7 @@ class AudioCloud extends AbstractApplication{
         this.visual1 = true;
         this.buildFireflies();
         this.buildShinnyParticlesGroup();
+        // this.buildLight();
     }
 
     destroyVisual1() {
@@ -278,6 +299,30 @@ class AudioCloud extends AbstractApplication{
             this.params.scale * 20.0 * Math.cos(value * t) * (3.0 + Math.cos(3.0 * t)),
             this.params.scale * 20.0 * Math.sin(value * t) * (3.0 + Math.cos(3.0 * t)),
             this.params.scale * 50.0 * Math.sin(3.0 * t) );
+    }
+
+    buildLight() {
+        this.light = this._createLight(0xffffff);
+        this._scene.add(this.light);
+    }
+
+    _createLight(color) {
+
+        let pointLight = new THREE.PointLight( color, 100, 30 );
+        
+        pointLight.castShadow = true;
+        pointLight.shadow.camera.near = 1;
+        pointLight.shadow.camera.far = 30;
+        pointLight.shadowCameraVisible = true;
+        pointLight.shadow.bias = 0.01;
+        
+        let geometry = new THREE.SphereGeometry( 0.3, 12, 6 );
+        let material = new THREE.MeshBasicMaterial( { color: color } );
+        let sphere = new THREE.Mesh( geometry, material );
+        
+        pointLight.add( sphere );
+        
+        return pointLight;
     }
 
 
@@ -601,17 +646,37 @@ class AudioCloud extends AbstractApplication{
         this.gui.add(this.params, 'useBlur');
         this.gui.add(this.params, 'useBloom');
 
-        this.gui.add( this.particleParameters, 'fountain'   ).name("Star Fountain");
+        // this.gui.add( this.particleParameters, 'fountain'   ).name("Star Fountain");
         this.gui.add( this.particleParameters, 'startunnel' ).name("Star Tunnel");
-        this.gui.add( this.particleParameters, 'starfield'  ).name("Star Field");
-        this.gui.add( this.particleParameters, 'fireflies'  ).name("Fireflies");
-        this.gui.add( this.particleParameters, 'fireball'   ).name("Fireball");
-        this.gui.add( this.particleParameters, 'rain'       ).name("Rain");
-        this.gui.add( this.particleParameters, 'snow'       ).name("Snow");
+
+        // this.gui.add( this.particleParameters, 'starfield'  ).name("Star Field");
+        // this.gui.add( this.particleParameters, 'fireflies'  ).name("Fireflies");
+        // this.gui.add( this.particleParameters, 'fireball'   ).name("Fireball");
+        // this.gui.add( this.particleParameters, 'rain'       ).name("Rain");
+        // this.gui.add( this.particleParameters, 'snow'       ).name("Snow");
         
+        
+        // Super bright
+        // this.gui.add(this.params, 'brightness', 0, 4).step(0.1).onChange(
+        //     this.onParamsChange.bind(this));
+
+        // Normal
+        // this.gui.add(this.params, 'brightness', 1, 6).step(0.1).onChange(
+        //     this.onParamsChange.bind(this));
+        
+        // Listen
+        this.gui.add(this.params, 'brightness', 1, 6).listen();
+
+        this.onParamsChange();
+
         return sizeController.onChange(function(value) {
             return this.resize(value);
         }.bind(this));
+    }
+
+    onParamsChange() {
+        //copy gui params into shader uniforms
+        this.testPass.uniforms[ "amount" ].value = this.params.brightness;
     }
 
     restartEngine(parameters) {
@@ -741,7 +806,8 @@ class AudioCloud extends AbstractApplication{
         let brightness = this.OSCHandler.getBrightness();
         let new_size = 0;
 
-        let rightFoot = this.OSCHandler.getSwitch();
+        let leftHand = this.OSCHandler.getSwitch();
+        console.log(leftHand);
         let rightHand = this.OSCHandler.getChangeViz();
         let camera = this.OSCHandler.getCameraPosition();
         
@@ -749,12 +815,14 @@ class AudioCloud extends AbstractApplication{
         let vizShouldChange = false;
 
         // Activate the visual change for visual1
-        if ((rightFoot.y > -0.55) && (this.frameCount == 0)) {
-            shouldChange = true;
-            this.activateFrameCount = true;
-        }
-        else {
-            shouldChange = false;
+        if (leftHand) {
+            if ((leftHand.y > camera.y) && (this.frameCount == 0)) {
+                shouldChange = true;
+                this.activateFrameCount = true;
+            }
+            else {
+                shouldChange = false;
+            }
         }
     
         // Frame count is activated so the gesture doesn't 
@@ -770,12 +838,23 @@ class AudioCloud extends AbstractApplication{
         }
         
 
-        if ((rightHand.y > camera.y) && (this.vizFrameCount == 0)) {
-            vizShouldChange = true;
-            this.activateVizframeCount = true
-        }
-        else {
-            vizShouldChange = false
+    // var time = performance.now() * 0.001;
+    // this.light.position.x = Math.sin( time ) * 9;
+    // this.light.position.y = Math.sin( time * 1.1 ) * 9 + 5;
+    // this.light.position.z = Math.sin( time * 1.2 ) * 9;
+    // time += 10000;
+
+
+        this.testPass.uniforms[ "amount" ].value = this.params.brightness;
+
+        if (rightHand) {
+            if ((rightHand.y > camera.y) && (this.vizFrameCount == 0)) {
+                vizShouldChange = true;
+                this.activateVizframeCount = true
+            }
+            else {
+                vizShouldChange = false
+            }
         }
 
         if (this.activateVizframeCount) {
@@ -796,6 +875,10 @@ class AudioCloud extends AbstractApplication{
         // Change distance parameter (Amplitude)
         if (OSCdistance) {
             this.params.distance = OSCdistance;
+        }
+
+        if (brightness) {
+            this.params.brightness = brightness;
         }
 
         if (this.camX && this.camY) {
@@ -871,12 +954,19 @@ class AudioCloud extends AbstractApplication{
         // }
 
         if (this.params.usePostProcessing) {
-            this.composer.reset();
-            this.composer.render(this._scene, this._camera);
-            if (this.params.useFXAA) this.composer.pass(this.fxaaPass);
-            if (this.params.useBlur) this.composer.pass(this.boxBlurPass);
-            if (this.params.useBloom) this.composer.pass(this.bloomPass);
-            this.composer.toScreen();
+            // this.composer.reset();
+            // this.composer.render(this._scene, this._camera);
+            // if (this.params.useFXAA) this.composer.pass(this.fxaaPass);
+            // if (this.params.useBlur) this.composer.pass(this.boxBlurPass);
+            // if (this.params.useBloom) this.composer.pass(this.bloomPass);
+            // if (this.params.brightness) this.composer.pass(this.brightness);
+
+            // this.composer.toScreen();
+            
+           
+            this.composer.render(0.1);
+
+
         }
         else {
             this._renderer.render(this._scene, this._camera);

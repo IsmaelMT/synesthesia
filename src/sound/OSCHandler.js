@@ -104,7 +104,6 @@ class OSCHandler {
 
 
     _handleSwitch(oscMessage) {
-        
         this.switch = {
             x: oscMessage.args[0],
             y: oscMessage.args[1],
@@ -125,7 +124,14 @@ class OSCHandler {
     _handleBrightness(oscMessage) {
         // console.log("brightness");
         // console.log(oscMessage.args[0]);
-        this.brightness = oscMessage.args[0] >= 1 ? 1 : oscMessage.args[0];
+        //
+
+        if (oscMessage.args[0] < 1) {
+            this.brightness = 1;
+        }
+        else {
+            this.brightness = oscMessage.args[0];
+        }
     }
 
     _OSCUrlParser(address) {
